@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}AI Result{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-10 col-lg-8">
+    {% if high_risk_triggered %}
+      <div class="alert alert-danger shadow-sm mb-3">
+        <strong>High Risk detected.</strong> Doctor Notified via SmartHMS automation. You will be prioritized for review.
+      </div>
+    {% else %}
+      <div class="alert alert-success shadow-sm mb-3">
+        <strong>Low Risk.</strong> Your current values indicate a lower diabetes risk. Continue regular monitoring as advised.
+      </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h1 class="h6 mb-0 text-muted text-uppercase">Visit Summary</h1>
+        <span class="badge bg-{% if visit.prediction == 'High Risk' %}danger{% else %}success{% endif %}">
+          {{ visit.prediction }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="border rounded p-2 mb-2 bg-light">
+              <div class="small text-muted text-uppercase">Patient</div>
+              <div class="fw-semibold">{{ patient.full_name }}</div>
+              <div class="small text-muted">Age {{ patient.age }}, {{ patient.gender }}</div>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Pregnancies</span><span>{{ visit.pregnancies }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Age</span><span>{{ visit.age }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Recorded At</span><span>{{ visit.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Glucose</span><span>{{ visit.glucose }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Blood Pressure</span><span>{{ visit.blood_pressure }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Skin Thickness</span><span>{{ visit.skin_thickness }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Insulin</span><span>{{ visit.insulin }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>BMI</span><span>{{ visit.bmi }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Diabetes Pedigree Function (DPF)</span><span>{{ visit.dpf }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-white d-flex justify-content-between">
+        <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary btn-sm">Run Another Prediction</a>
+        <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-primary btn-sm">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

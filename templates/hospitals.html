@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Hospitals{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h4 mb-1 text-primary">Hospitals</h1>
+      <p class="text-muted mb-0">Real-time bed availability across all hospitals.</p>
+    </div>
+  </div>
+</div>
+
+{% if current_user.role == 'admin' %}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-white">
+      <h2 class="h6 mb-0 text-muted text-uppercase">Add / Edit Hospital</h2>
+    </div>
+    <div class="card-body">
+      <form method="post" class="row g-2">
+        <input type="hidden" name="hospital_id" id="hospital_id">
+        <div class="col-md-4">
+          <label class="form-label">Name</label>
+          <input type="text" name="name" id="h_name" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Total Beds</label>
+          <input type="number" name="total_beds" id="h_total" class="form-control" min="0" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Available Beds</label>
+          <input type="number" name="available_beds" id="h_available" class="form-control" min="0" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Save</button>
+        </div>
+      </form>
+      <p class="small text-muted mt-2 mb-0">
+        Click the edit icon next to a hospital to pre-fill this form.
+      </p>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white">
+    <h2 class="h6 mb-0 text-muted text-uppercase">Hospital Table</h2>
+  </div>
+  <div class="card-body">
+    {% if hospitals %}
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>Hospital</th>
+              <th class="text-center">Total Beds</th>
+              <th class="text-center">Available Beds</th>
+              {% if current_user.role == 'admin' %}
+                <th class="text-center">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hospitals %}
+              <tr>
+                <td>{{ h.name }}</td>
+                <td class="text-center">{{ h.total_beds }}</td>
+                <td class="text-center">
+                  <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
+                    {{ h.available_beds }}
+                  </span>
+                </td>
+                {% if current_user.role == 'admin' %}
+                  <td class="text-center">
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm"
+                      onclick="fillHospitalForm('{{ h.id }}', '{{ h.name|escape }}', '{{ h.total_beds }}', '{{ h.available_beds }}')"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No hospitals configured yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function fillHospitalForm(id, name, total, available) {
+    document.getElementById('hospital_id').value = id;
+    document.getElementById('h_name').value = name;
+    document.getElementById('h_total').value = total;
+    document.getElementById('h_available').value = available;
+  }
+</script>
+{% endblock %}
+

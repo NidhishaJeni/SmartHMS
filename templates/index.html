@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h1 class="h4 mb-2 text-primary">Smart Hospital Management System</h1>
+        <p class="text-muted mb-3">
+          Coordinating multi-hospital resources, intelligent appointment booking, and AI-powered diabetes risk prediction in one unified dashboard.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">Register</a>
+          {% else %}
+            {% if current_user.role == 'patient' %}
+              <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-primary">Go to Patient Dashboard</a>
+            {% elif current_user.role == 'doctor' %}
+              <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-primary">Go to Doctor Dashboard</a>
+            {% elif current_user.role == 'admin' %}
+              <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-primary">Go to Admin Dashboard</a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4 mt-3 mt-lg-0">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-muted mb-3">System Metrics</h2>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="metric-card text-center">
+              <div class="metric-label">Patients</div>
+              <div class="metric-value text-primary">{{ total_patients }}</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-card text-center">
+              <div class="metric-label">Hospitals</div>
+              <div class="metric-value text-primary">{{ total_hospitals }}</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-card text-center">
+              <div class="metric-label">Appointments</div>
+              <div class="metric-value text-primary">{{ total_appointments }}</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="metric-card text-center">
+              <div class="metric-label">High-Risk Visits</div>
+              <div class="metric-value text-danger">{{ high_risk_visits }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="h6 mb-0 text-muted text-uppercase">Hospital Bed Availability</h2>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if hospitals %}
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>Hospital</th>
+              <th class="text-center">Total Beds</th>
+              <th class="text-center">Available Beds</th>
+              <th class="text-center">Utilization</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hospitals %}
+              {% set utilization = (h.total_beds - h.available_beds) / h.total_beds * 100 if h.total_beds > 0 else 0 %}
+              <tr>
+                <td>{{ h.name }}</td>
+                <td class="text-center">{{ h.total_beds }}</td>
+                <td class="text-center">
+                  <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
+                    {{ h.available_beds }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ utilization|round(0) }}%;"></div>
+                  </div>
+                  <small class="text-muted">{{ utilization|round(0) }}%</small>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No hospitals configured yet. Admins can add hospitals from the Admin Dashboard.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

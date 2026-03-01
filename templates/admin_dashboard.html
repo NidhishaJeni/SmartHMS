@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col-12">
+    <h1 class="h4 mb-1 text-primary">Admin Dashboard</h1>
+    <p class="text-muted mb-0">Monitor hospitals, capacity, and system-wide alerts.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Total Patients</div>
+        <div class="metric-value text-primary">{{ total_patients }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Hospitals</div>
+        <div class="metric-value text-primary">{{ total_hospitals }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Appointments</div>
+        <div class="metric-value text-primary">{{ total_appointments }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">High-Risk Alerts</div>
+        <div class="metric-value text-danger">{{ high_risk_alerts|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Hospital Capacity</h2>
+        <a href="{{ url_for('main.hospitals_view') }}" class="btn btn-link btn-sm">Manage</a>
+      </div>
+      <div class="card-body">
+        {% if hospitals %}
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr class="text-muted small">
+                  <th>Hospital</th>
+                  <th class="text-center">Total</th>
+                  <th class="text-center">Available</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in hospitals %}
+                  <tr>
+                    <td>{{ h.name }}</td>
+                    <td class="text-center">{{ h.total_beds }}</td>
+                    <td class="text-center">
+                      <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
+                        {{ h.available_beds }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No hospitals configured yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Recent High-Risk Alerts</h2>
+        <span class="badge bg-outline-danger text-danger border border-danger small">Doctor Notified</span>
+      </div>
+      <div class="card-body">
+        {% if high_risk_alerts %}
+          <ul class="list-group list-group-flush">
+            {% for a in high_risk_alerts %}
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">
+                      {{ a.message }}
+                      <span class="badge bg-danger ms-1">High Risk</span>
+                    </div>
+                    <small class="text-muted">
+                      Patient: {{ a.patient.full_name if a.patient else "Unknown" }} &middot;
+                      {{ a.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">No alerts yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

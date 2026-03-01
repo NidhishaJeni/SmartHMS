@@ -1,0 +1,57 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.navbar-brand {
+  letter-spacing: 0.03em;
+}
+
+.metric-card .metric-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #6c757d;
+}
+
+.metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.card {
+  border-radius: 0.5rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+  border-color: #0b5ed7;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+  border-color: #0a58ca;
+}
+
+.alert-danger,
+.alert-warning,
+.alert-success,
+.alert-info {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.alert-danger {
+  border-left-color: #dc3545;
+}
+
+.alert-warning {
+  border-left-color: #ffc107;
+}
+
+.alert-success {
+  border-left-color: #198754;
+}
+
+.alert-info {
+  border-left-color: #0dcaf0;
+}
+

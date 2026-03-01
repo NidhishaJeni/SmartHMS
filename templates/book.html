@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-body">
+        <h1 class="h5 mb-3 text-primary">Smart Appointment Booking</h1>
+        <p class="text-muted small mb-3">
+          SmartHMS checks live bed availability before confirming your appointment and recommends alternative hospitals when needed.
+        </p>
+        <form method="post" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Hospital</label>
+            <select name="hospital_id" class="form-select" required>
+              <option value="" selected disabled>Select hospital</option>
+              {% for h in hospitals %}
+                <option value="{{ h.id }}">
+                  {{ h.name }} ({{ h.available_beds }} / {{ h.total_beds }} beds available)
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Preferred Date</label>
+            <input type="date" name="date" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Book Appointment</button>
+        </form>
+      </div>
+    </div>
+
+    {% if recommendation %}
+      <div class="alert alert-info shadow-sm">
+        <h2 class="h6 text-primary mb-1">Recommended Hospital</h2>
+        <p class="mb-0 small">
+          <strong>{{ recommendation.name }}</strong> currently has
+          <strong>{{ recommendation.available_beds }}</strong> beds available out of {{ recommendation.total_beds }}.
+          Consider booking there for better availability.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

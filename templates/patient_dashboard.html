@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col-12 col-lg-8">
+    <h1 class="h4 mb-1 text-primary">Welcome, {{ patient.full_name if patient else current_user.username }}</h1>
+    <p class="text-muted mb-0">Patient overview, appointments, and AI-powered visit history.</p>
+  </div>
+  <div class="col-12 col-lg-4 mt-3 mt-lg-0 text-lg-end">
+    <a href="{{ url_for('main.book_appointment') }}" class="btn btn-primary me-2 mb-2">Book Appointment</a>
+    <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary mb-2">New AI Visit</a>
+  </div>
+</div>
+
+{% if not patient %}
+  <div class="alert alert-warning shadow-sm">
+    No patient profile found. <a href="{{ url_for('main.create_profile') }}" class="alert-link">Create your profile now</a> to enable appointments and visits.
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Recent Appointments</h2>
+      </div>
+      <div class="card-body">
+        {% if appointments %}
+          <ul class="list-group list-group-flush">
+            {% for a in appointments %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ a.hospital.name if a.hospital else "Unknown Hospital" }}</div>
+                  <small class="text-muted">Date: {{ a.date }} &middot; Status: {{ a.status }}</small>
+                </div>
+                {% if a.qr_code %}
+                  <a href="{{ url_for('static', filename=a.qr_code) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                    View QR
+                  </a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+          <a href="{{ url_for('main.appointments_view') }}" class="btn btn-link btn-sm mt-2">View all appointments</a>
+        {% else %}
+          <p class="text-muted mb-0">No appointments yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Recent AI Risk Predictions</h2>
+      </div>
+      <div class="card-body">
+        {% if visits %}
+          <ul class="list-group list-group-flush">
+            {% for v in visits %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">
+                    {{ v.prediction }}
+                    {% if v.prediction == 'High Risk' %}
+                      <span class="badge bg-danger ms-1">Priority</span>
+                    {% else %}
+                      <span class="badge bg-success ms-1">Stable</span>
+                    {% endif %}
+                  </div>
+                  <small class="text-muted">
+                    Glucose: {{ v.glucose }} &middot; BMI: {{ v.bmi }} &middot; {{ v.created_at.strftime('%Y-%m-%d %H:%M') }}
+                  </small>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+          <a href="{{ url_for('main.visit') }}" class="btn btn-link btn-sm mt-2">Record new visit</a>
+        {% else %}
+          <p class="text-muted mb-0">No AI visits recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
