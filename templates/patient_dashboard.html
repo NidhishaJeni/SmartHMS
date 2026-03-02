@@ -4,17 +4,17 @@
 <div class="row mb-3">
   <div class="col-12 col-lg-8">
     <h1 class="h4 mb-1 text-primary">Welcome, {{ patient.full_name if patient else current_user.username }}</h1>
-    <p class="text-muted mb-0">Patient overview, appointments, and AI-powered visit history.</p>
+    <p class="text-muted mb-0">Your health overview, appointments, and AI-powered health assessments.</p>
   </div>
   <div class="col-12 col-lg-4 mt-3 mt-lg-0 text-lg-end">
     <a href="{{ url_for('main.book_appointment') }}" class="btn btn-primary me-2 mb-2">Book Appointment</a>
-    <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary mb-2">New AI Visit</a>
+    <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary mb-2">Health Assessment</a>
   </div>
 </div>
 
 {% if not patient %}
   <div class="alert alert-warning shadow-sm">
-    No patient profile found. <a href="{{ url_for('main.create_profile') }}" class="alert-link">Create your profile now</a> to enable appointments and visits.
+    No patient profile found. <a href="{{ url_for('main.create_profile') }}" class="alert-link">Create your profile now</a> to enable appointments and health assessments.
   </div>
 {% endif %}
 
@@ -51,37 +51,121 @@
 
   <div class="col-md-6">
     <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white">
-        <h2 class="h6 mb-0 text-muted text-uppercase">Recent AI Risk Predictions</h2>
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Health Assessments & Treatment Status</h2>
       </div>
       <div class="card-body">
         {% if visits %}
           <ul class="list-group list-group-flush">
             {% for v in visits %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="fw-semibold">
-                    {{ v.prediction }}
-                    {% if v.prediction == 'High Risk' %}
-                      <span class="badge bg-danger ms-1">Priority</span>
-                    {% else %}
-                      <span class="badge bg-success ms-1">Stable</span>
-                    {% endif %}
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <span class="fw-semibold">{{ v.disease_type or 'General' }}</span>
+                    <span class="badge bg-{% if v.prediction == 'High Risk' %}danger{% elif v.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %} ms-1">
+                      {{ v.prediction }}
+                    </span>
                   </div>
-                  <small class="text-muted">
-                    Glucose: {{ v.glucose }} &middot; BMI: {{ v.bmi }} &middot; {{ v.created_at.strftime('%Y-%m-%d %H:%M') }}
-                  </small>
+                  <span class="badge bg-{% if v.status == 'Pending Review' %}warning{% elif v.status == 'Under Treatment' %}info{% elif v.status == 'Treated' %}success{% else %}secondary{% endif %}">
+                    {{ v.status }}
+                  </span>
                 </div>
+                <small class="text-muted d-block">
+                  Risk Score: {{ v.risk_score }}/100 &middot; {{ v.created_at.strftime('%Y-%m-%d') }}
+                </small>
+                {% if v.diagnosis %}
+                  <div class="mt-1 small">
+                    <strong>Diagnosis:</strong> {{ v.diagnosis }}
+                  </div>
+                {% endif %}
+                {% if v.treatment_plan %}
+                  <div class="mt-1 small">
+                    <strong>Treatment:</strong> {{ v.treatment_plan[:100] }}{% if v.treatment_plan|length > 100 %}...{% endif %}
+                  </div>
+                {% endif %}
+                {% if v.doctor_notes %}
+                  <div class="mt-1 small text-info">
+                    <strong>Doctor's Note:</strong> {{ v.doctor_notes[:100] }}{% if v.doctor_notes|length > 100 %}...{% endif %}
+                  </div>
+                {% endif %}
               </li>
             {% endfor %}
           </ul>
-          <a href="{{ url_for('main.visit') }}" class="btn btn-link btn-sm mt-2">Record new visit</a>
+          <a href="{{ url_for('main.visit') }}" class="btn btn-link btn-sm mt-2">New Health Assessment</a>
         {% else %}
-          <p class="text-muted mb-0">No AI visits recorded yet.</p>
+          <p class="text-muted mb-0">No health assessments recorded yet.</p>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
+
+{% if patient %}
+<!-- Health Summary Card -->
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0 text-muted text-uppercase">What Our AI Health Assessment Covers</h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">1</span>
+              <span>Diabetes Mellitus</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">2</span>
+              <span>Cardiovascular Disease</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">3</span>
+              <span>Hypertension</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">4</span>
+              <span>Respiratory Disease</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">5</span>
+              <span>Kidney Disease</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">6</span>
+              <span>Liver Disease</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">7</span>
+              <span>Anemia</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-primary me-2">8</span>
+              <span>Thyroid Disorders</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+          Our AI system analyzes your vitals and symptoms to detect potential health risks and recommends appropriate diagnostic tests.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 

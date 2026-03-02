@@ -1,4 +1,5 @@
 from flask import Flask
+from sqlalchemy import text
 
 from config import get_config
 from extensions import db, login_manager
@@ -19,9 +20,62 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        migrate_visit_schema()
         seed_initial_data()
 
     return app
+
+
+def migrate_visit_schema():
+    """
+    Lightweight runtime migration for SQLite demo environments.
+    Adds newly introduced visit workflow columns if missing.
+    """
+    engine_name = db.engine.dialect.name if db.engine else ""
+    if engine_name != "sqlite":
+        return
+
+    expected_columns = {
+        # Extended vitals for comprehensive disease detection
+        "heart_rate": "FLOAT DEFAULT 0",
+        "respiratory_rate": "FLOAT DEFAULT 0",
+        "oxygen_saturation": "FLOAT DEFAULT 0",
+        "cholesterol": "FLOAT DEFAULT 0",
+        "hdl": "FLOAT DEFAULT 0",
+        "ldl": "FLOAT DEFAULT 0",
+        "triglycerides": "FLOAT DEFAULT 0",
+        "creatinine": "FLOAT DEFAULT 0",
+        "urea": "FLOAT DEFAULT 0",
+        "alt": "FLOAT DEFAULT 0",
+        "ast": "FLOAT DEFAULT 0",
+        "hemoglobin": "FLOAT DEFAULT 0",
+        "chest_pain": "BOOLEAN DEFAULT 0",
+        "shortness_of_breath": "BOOLEAN DEFAULT 0",
+        "fatigue": "BOOLEAN DEFAULT 0",
+        "swelling": "BOOLEAN DEFAULT 0",
+        "smoking": "BOOLEAN DEFAULT 0",
+        "family_history": "VARCHAR(255) DEFAULT ''",
+        # Prediction results - supports multiple diseases
+        "disease_type": "VARCHAR(64) DEFAULT 'General'",
+        "risk_score": "INTEGER DEFAULT 0",
+        "predicted_conditions": "TEXT DEFAULT ''",
+        "suggested_tests": "TEXT DEFAULT ''",
+        # Treatment tracking
+        "status": "VARCHAR(32) DEFAULT 'Pending Review'",
+        "doctor_notes": "TEXT DEFAULT ''",
+        "diagnosis": "TEXT DEFAULT ''",
+        "treatment_plan": "TEXT DEFAULT ''",
+        "reviewed_by": "INTEGER",
+        "reviewed_at": "DATETIME",
+    }
+
+    result = db.session.execute(text("PRAGMA table_info(visits)"))
+    existing_columns = {row[1] for row in result.fetchall()}
+
+    for col_name, col_type in expected_columns.items():
+        if col_name not in existing_columns:
+            db.session.execute(text(f"ALTER TABLE visits ADD COLUMN {col_name} {col_type}"))
+    db.session.commit()
 
 
 def seed_initial_data():
@@ -69,4 +123,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
-

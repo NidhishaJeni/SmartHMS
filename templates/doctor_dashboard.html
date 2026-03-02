@@ -4,45 +4,142 @@
 <div class="row mb-3">
   <div class="col-12">
     <h1 class="h4 mb-1 text-primary">Doctor Dashboard</h1>
-    <p class="text-muted mb-0">Prioritized view of high-risk patients and their visit history.</p>
+    <p class="text-muted mb-0">Comprehensive view of patient health assessments and treatment tracking.</p>
   </div>
 </div>
 
+<!-- Statistics Cards -->
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Pending Review</div>
+        <div class="metric-value text-warning">{{ pending_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Under Treatment</div>
+        <div class="metric-value text-info">{{ under_treatment_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">Treated</div>
+        <div class="metric-value text-success">{{ treated_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card metric-card shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="metric-label">High Risk Patients</div>
+        <div class="metric-value text-danger">{{ high_risk_count }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm border-0 mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="form-label mb-0">Filter by Status:</label>
+      </div>
+      <div class="col-auto">
+        <select name="status" class="form-select form-select-sm">
+          <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Statuses</option>
+          <option value="Pending Review" {% if filter_status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+          <option value="Under Treatment" {% if filter_status == 'Under Treatment' %}selected{% endif %}>Under Treatment</option>
+          <option value="Treated" {% if filter_status == 'Treated' %}selected{% endif %}>Treated</option>
+          <option value="Follow-up Required" {% if filter_status == 'Follow-up Required' %}selected{% endif %}>Follow-up Required</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label mb-0">Risk Level:</label>
+      </div>
+      <div class="col-auto">
+        <select name="risk" class="form-select form-select-sm">
+          <option value="all" {% if filter_risk == 'all' %}selected{% endif %}>All Risk Levels</option>
+          <option value="high" {% if filter_risk == 'high' %}selected{% endif %}>High Risk</option>
+          <option value="moderate" {% if filter_risk == 'moderate' %}selected{% endif %}>Moderate Risk</option>
+          <option value="low" {% if filter_risk == 'low' %}selected{% endif %}>Low Risk</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Patient Visits Table -->
 <div class="card shadow-sm border-0">
   <div class="card-header bg-white d-flex justify-content-between align-items-center">
-    <h2 class="h6 mb-0 text-muted text-uppercase">High-Risk Visits</h2>
-    <span class="badge bg-danger">{{ high_risk_visits|length }} High-Risk</span>
+    <h2 class="h6 mb-0 text-muted text-uppercase">Patient Health Assessments</h2>
+    <span class="badge bg-primary">{{ all_visits|length }} Records</span>
   </div>
   <div class="card-body">
-    {% if high_risk_visits %}
+    {% if all_visits %}
       <div class="table-responsive">
         <table class="table align-middle">
           <thead>
             <tr class="text-muted small">
               <th>Patient</th>
-              <th>Glucose</th>
-              <th>BMI</th>
-              <th>Blood Pressure</th>
-              <th>Age</th>
+              <th>Disease Type</th>
+              <th>Risk Level</th>
+              <th>Risk Score</th>
+              <th>Status</th>
               <th>Recorded At</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {% for v in high_risk_visits %}
-              <tr class="table-danger">
-                <td>{{ v.patient.full_name if v.patient else "Unknown" }}</td>
-                <td>{{ v.glucose }}</td>
-                <td>{{ v.bmi }}</td>
-                <td>{{ v.blood_pressure }}</td>
-                <td>{{ v.age }}</td>
+            {% for v in all_visits %}
+              <tr class="{% if v.prediction == 'High Risk' %}table-danger{% elif v.prediction == 'Moderate Risk' %}table-warning{% endif %}">
+                <td>
+                  <strong>{{ v.patient.full_name if v.patient else "Unknown" }}</strong>
+                  <br><small class="text-muted">Age {{ v.age }}, {{ v.patient.gender if v.patient else "" }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-secondary">{{ v.disease_type or "General" }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-{% if v.prediction == 'High Risk' %}danger{% elif v.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %}">
+                    {{ v.prediction }}
+                  </span>
+                </td>
+                <td>
+                  <div class="progress" style="width: 60px; height: 20px;">
+                    <div class="progress-bar bg-{% if v.risk_score >= 60 %}danger{% elif v.risk_score >= 35 %}warning{% else %}success{% endif %}" 
+                         role="progressbar" style="width: {{ v.risk_score }}%">
+                      {{ v.risk_score }}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-{% if v.status == 'Pending Review' %}warning{% elif v.status == 'Under Treatment' %}info{% elif v.status == 'Treated' %}success{% else %}secondary{% endif %}">
+                    {{ v.status }}
+                  </span>
+                </td>
                 <td>{{ v.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                  <a href="{{ url_for('main.doctor_view_visit', visit_id=v.id) }}" class="btn btn-sm btn-outline-primary">
+                    View Details
+                  </a>
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <p class="text-muted mb-0">No high-risk patients at the moment.</p>
+      <p class="text-muted mb-0">No patient assessments found matching the selected filters.</p>
     {% endif %}
   </div>
 </div>

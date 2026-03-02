@@ -1,49 +1,156 @@
 {% extends "base.html" %}
-{% block title %}AI Visit{% endblock %}
+{% block title %}AI Health Assessment{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-10 col-lg-8">
+  <div class="col-md-12 col-lg-10">
     <div class="card shadow-sm border-0">
       <div class="card-body">
-        <h1 class="h5 mb-2 text-primary">AI Risk Prediction Visit</h1>
+        <h1 class="h5 mb-2 text-primary">Comprehensive AI Health Assessment</h1>
         <p class="text-muted small mb-3">
-          Enter your latest clinical values to run SmartHMS diabetes risk prediction using a pre-trained model (or intelligent heuristic).
+          Enter your clinical values and symptoms for a comprehensive health risk assessment. Our AI analyzes multiple diseases including Diabetes, Cardiovascular Disease, Hypertension, Respiratory Issues, Kidney Disease, Liver Disease, and Anemia.
         </p>
-        <form method="post" class="row g-3" novalidate>
-          <div class="col-md-3">
-            <label class="form-label">Pregnancies</label>
-            <input type="number" name="pregnancies" class="form-control" min="0" value="0" required>
+        <form method="post" novalidate>
+          <!-- Basic Vitals Section -->
+          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Basic Vitals</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Age</label>
+              <input type="number" name="age" class="form-control" min="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">BMI</label>
+              <input type="number" step="0.1" name="bmi" class="form-control" placeholder="kg/m²" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Blood Pressure (Systolic)</label>
+              <input type="number" step="0.1" name="blood_pressure" class="form-control" placeholder="mmHg" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Heart Rate</label>
+              <input type="number" step="0.1" name="heart_rate" class="form-control" placeholder="bpm">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Respiratory Rate</label>
+              <input type="number" step="0.1" name="respiratory_rate" class="form-control" placeholder="breaths/min">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Oxygen Saturation (SpO2)</label>
+              <input type="number" step="0.1" name="oxygen_saturation" class="form-control" placeholder="%" value="98">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Pregnancies</label>
+              <input type="number" name="pregnancies" class="form-control" min="0" value="0">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Skin Thickness</label>
+              <input type="number" step="0.1" name="skin_thickness" class="form-control" placeholder="mm">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Glucose</label>
-            <input type="number" step="0.1" name="glucose" class="form-control" required>
+          
+          <!-- Blood Tests Section -->
+          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Blood Tests (if available)</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Glucose (Fasting)</label>
+              <input type="number" step="0.1" name="glucose" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Insulin</label>
+              <input type="number" step="0.1" name="insulin" class="form-control" placeholder="μU/mL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Hemoglobin</label>
+              <input type="number" step="0.1" name="hemoglobin" class="form-control" placeholder="g/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">DPF (Diabetes Pedigree)</label>
+              <input type="number" step="0.001" name="dpf" class="form-control" placeholder="0.0 - 2.5">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Blood Pressure</label>
-            <input type="number" step="0.1" name="blood_pressure" class="form-control" required>
+          
+          <!-- Lipid Profile Section -->
+          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Lipid Profile (if available)</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Total Cholesterol</label>
+              <input type="number" step="0.1" name="cholesterol" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">HDL Cholesterol</label>
+              <input type="number" step="0.1" name="hdl" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">LDL Cholesterol</label>
+              <input type="number" step="0.1" name="ldl" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Triglycerides</label>
+              <input type="number" step="0.1" name="triglycerides" class="form-control" placeholder="mg/dL">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Skin Thickness</label>
-            <input type="number" step="0.1" name="skin_thickness" class="form-control" required>
+          
+          <!-- Kidney & Liver Function Section -->
+          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Kidney & Liver Function (if available)</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Creatinine</label>
+              <input type="number" step="0.01" name="creatinine" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Urea/BUN</label>
+              <input type="number" step="0.1" name="urea" class="form-control" placeholder="mg/dL">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">ALT (Liver Enzyme)</label>
+              <input type="number" step="0.1" name="alt" class="form-control" placeholder="U/L">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">AST (Liver Enzyme)</label>
+              <input type="number" step="0.1" name="ast" class="form-control" placeholder="U/L">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Insulin</label>
-            <input type="number" step="0.1" name="insulin" class="form-control" required>
+          
+          <!-- Symptoms Section -->
+          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Symptoms & Risk Factors</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="form-check">
+                <input type="checkbox" name="chest_pain" class="form-check-input" id="chest_pain">
+                <label class="form-check-label" for="chest_pain">Chest Pain/Discomfort</label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input type="checkbox" name="shortness_of_breath" class="form-check-input" id="shortness_of_breath">
+                <label class="form-check-label" for="shortness_of_breath">Shortness of Breath</label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input type="checkbox" name="fatigue" class="form-check-input" id="fatigue">
+                <label class="form-check-label" for="fatigue">Unusual Fatigue</label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input type="checkbox" name="swelling" class="form-check-input" id="swelling">
+                <label class="form-check-label" for="swelling">Swelling (Legs/Ankles)</label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check">
+                <input type="checkbox" name="smoking" class="form-check-input" id="smoking">
+                <label class="form-check-label" for="smoking">Smoker</label>
+              </div>
+            </div>
+            <div class="col-md-9">
+              <label class="form-label">Family History (comma-separated)</label>
+              <input type="text" name="family_history" class="form-control" placeholder="e.g., heart disease, diabetes, hypertension">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">BMI</label>
-            <input type="number" step="0.1" name="bmi" class="form-control" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">DPF</label>
-            <input type="number" step="0.001" name="dpf" class="form-control" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Age</label>
-            <input type="number" name="age" class="form-control" min="0" required>
-          </div>
+          
           <div class="col-12">
-            <button type="submit" class="btn btn-primary w-100">Run Prediction</button>
+            <button type="submit" class="btn btn-primary w-100">Run Comprehensive Health Assessment</button>
           </div>
         </form>
       </div>

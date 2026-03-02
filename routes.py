@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from functools import wraps
 
@@ -22,6 +23,53 @@ from models import User, Patient, Hospital, Appointment, Visit, Alert
 auth_bp = Blueprint("auth", __name__)
 main_bp = Blueprint("main", __name__)
 automation_bp = Blueprint("automation", __name__)
+
+# ============================================================================
+# Disease Categories and Diagnostic Tests Configuration
+# ============================================================================
+
+DISEASE_CATEGORIES = {
+    "diabetes": {
+        "name": "Diabetes Mellitus",
+        "description": "High blood sugar levels due to insulin resistance or deficiency",
+        "tests": ["Fasting Blood Glucose", "HbA1c Test", "Oral Glucose Tolerance Test (OGTT)", "Random Blood Sugar", "Urine Analysis"]
+    },
+    "cardiovascular": {
+        "name": "Cardiovascular Disease",
+        "description": "Heart and blood vessel conditions including coronary artery disease",
+        "tests": ["ECG/EKG", "Echocardiogram", "Lipid Profile", "Cardiac Enzyme Test (Troponin)", "Stress Test", "Chest X-Ray", "CT Angiography"]
+    },
+    "hypertension": {
+        "name": "Hypertension",
+        "description": "Chronic high blood pressure",
+        "tests": ["24-Hour Blood Pressure Monitoring", "Urinalysis", "Blood Chemistry Panel", "ECG", "Kidney Function Test"]
+    },
+    "respiratory": {
+        "name": "Respiratory Disease",
+        "description": "Conditions affecting the lungs and breathing",
+        "tests": ["Chest X-Ray", "Pulmonary Function Test (Spirometry)", "Arterial Blood Gas (ABG)", "CT Scan Chest", "Pulse Oximetry", "Sputum Culture"]
+    },
+    "kidney": {
+        "name": "Kidney Disease",
+        "description": "Chronic kidney disease or renal dysfunction",
+        "tests": ["Serum Creatinine", "Blood Urea Nitrogen (BUN)", "GFR Test", "Urinalysis", "Kidney Ultrasound", "Urine Protein Test"]
+    },
+    "liver": {
+        "name": "Liver Disease",
+        "description": "Hepatic conditions including fatty liver and cirrhosis",
+        "tests": ["Liver Function Test (LFT)", "ALT/AST Levels", "Bilirubin Test", "Liver Ultrasound", "Hepatitis Panel", "Albumin Test"]
+    },
+    "anemia": {
+        "name": "Anemia",
+        "description": "Low hemoglobin or red blood cell count",
+        "tests": ["Complete Blood Count (CBC)", "Iron Studies", "Vitamin B12 Level", "Folate Level", "Reticulocyte Count", "Peripheral Blood Smear"]
+    },
+    "thyroid": {
+        "name": "Thyroid Disorder",
+        "description": "Hypothyroidism or hyperthyroidism",
+        "tests": ["TSH Test", "T3 and T4 Levels", "Thyroid Ultrasound", "Thyroid Antibodies Test"]
+    }
+}
 
 
 def role_required(*roles):
@@ -65,6 +113,251 @@ def simple_risk_scorer(features):
     if features["blood_pressure"] >= 90:
         score += 1
     return "High Risk" if score >= 3 else "Low Risk"
+
+
+def comprehensive_disease_predictor(features):
+    """
+    Comprehensive multi-disease risk assessment.
+    Returns dict with detected conditions, risk levels, and suggested tests.
+    """
+    detected_conditions = []
+    all_suggested_tests = set()
+    total_risk_score = 0
+    primary_disease = "General"
+    
+    # 1. Diabetes Risk Assessment
+    diabetes_score = 0
+    if features.get("glucose", 0) >= 126:
+        diabetes_score += 30
+    elif features.get("glucose", 0) >= 100:
+        diabetes_score += 15
+    if features.get("bmi", 0) >= 30:
+        diabetes_score += 20
+    elif features.get("bmi", 0) >= 25:
+        diabetes_score += 10
+    if features.get("age", 0) >= 45:
+        diabetes_score += 10
+    if features.get("dpf", 0) >= 0.5:
+        diabetes_score += 15
+    if features.get("insulin", 0) <= 30 and features.get("glucose", 0) >= 100:
+        diabetes_score += 10
+    
+    if diabetes_score >= 40:
+        detected_conditions.append({
+            "disease": "Diabetes Mellitus",
+            "risk_level": "High Risk" if diabetes_score >= 60 else "Moderate Risk",
+            "score": min(diabetes_score, 100),
+            "key_indicators": ["High glucose", "Elevated BMI", "Age factor"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["diabetes"]["tests"])
+        if diabetes_score > total_risk_score:
+            total_risk_score = diabetes_score
+            primary_disease = "Diabetes"
+    
+    # 2. Cardiovascular Disease Risk Assessment
+    cardio_score = 0
+    if features.get("cholesterol", 0) >= 240:
+        cardio_score += 25
+    elif features.get("cholesterol", 0) >= 200:
+        cardio_score += 15
+    if features.get("ldl", 0) >= 160:
+        cardio_score += 20
+    if features.get("hdl", 0) <= 40:
+        cardio_score += 15
+    if features.get("blood_pressure", 0) >= 140:
+        cardio_score += 20
+    if features.get("chest_pain", False):
+        cardio_score += 25
+    if features.get("shortness_of_breath", False):
+        cardio_score += 15
+    if features.get("smoking", False):
+        cardio_score += 15
+    if features.get("age", 0) >= 55:
+        cardio_score += 10
+    if features.get("bmi", 0) >= 30:
+        cardio_score += 10
+    if "heart" in features.get("family_history", "").lower():
+        cardio_score += 15
+    
+    if cardio_score >= 35:
+        detected_conditions.append({
+            "disease": "Cardiovascular Disease",
+            "risk_level": "High Risk" if cardio_score >= 60 else "Moderate Risk",
+            "score": min(cardio_score, 100),
+            "key_indicators": ["Cholesterol levels", "Blood pressure", "Symptoms"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["cardiovascular"]["tests"])
+        if cardio_score > total_risk_score:
+            total_risk_score = cardio_score
+            primary_disease = "Cardiovascular"
+    
+    # 3. Hypertension Risk Assessment
+    hypertension_score = 0
+    bp = features.get("blood_pressure", 0)
+    if bp >= 140:
+        hypertension_score += 40
+    elif bp >= 130:
+        hypertension_score += 25
+    elif bp >= 120:
+        hypertension_score += 10
+    if features.get("age", 0) >= 50:
+        hypertension_score += 15
+    if features.get("bmi", 0) >= 30:
+        hypertension_score += 15
+    if features.get("smoking", False):
+        hypertension_score += 10
+    if "hypertension" in features.get("family_history", "").lower():
+        hypertension_score += 15
+    
+    if hypertension_score >= 40:
+        detected_conditions.append({
+            "disease": "Hypertension",
+            "risk_level": "High Risk" if hypertension_score >= 60 else "Moderate Risk",
+            "score": min(hypertension_score, 100),
+            "key_indicators": ["Elevated blood pressure", "Age", "Lifestyle"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["hypertension"]["tests"])
+        if hypertension_score > total_risk_score:
+            total_risk_score = hypertension_score
+            primary_disease = "Hypertension"
+    
+    # 4. Respiratory Disease Risk Assessment
+    respiratory_score = 0
+    if features.get("oxygen_saturation", 100) <= 92:
+        respiratory_score += 35
+    elif features.get("oxygen_saturation", 100) <= 95:
+        respiratory_score += 20
+    if features.get("respiratory_rate", 0) >= 24:
+        respiratory_score += 25
+    elif features.get("respiratory_rate", 0) >= 20:
+        respiratory_score += 10
+    if features.get("shortness_of_breath", False):
+        respiratory_score += 25
+    if features.get("smoking", False):
+        respiratory_score += 20
+    if features.get("fatigue", False):
+        respiratory_score += 10
+    
+    if respiratory_score >= 35:
+        detected_conditions.append({
+            "disease": "Respiratory Disease",
+            "risk_level": "High Risk" if respiratory_score >= 60 else "Moderate Risk",
+            "score": min(respiratory_score, 100),
+            "key_indicators": ["Low oxygen saturation", "Breathing issues", "Smoking history"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["respiratory"]["tests"])
+        if respiratory_score > total_risk_score:
+            total_risk_score = respiratory_score
+            primary_disease = "Respiratory"
+    
+    # 5. Kidney Disease Risk Assessment
+    kidney_score = 0
+    if features.get("creatinine", 0) >= 1.5:
+        kidney_score += 35
+    elif features.get("creatinine", 0) >= 1.2:
+        kidney_score += 20
+    if features.get("urea", 0) >= 45:
+        kidney_score += 25
+    elif features.get("urea", 0) >= 25:
+        kidney_score += 10
+    if features.get("swelling", False):
+        kidney_score += 20
+    if features.get("blood_pressure", 0) >= 140:
+        kidney_score += 15
+    if features.get("glucose", 0) >= 126:  # Diabetes affects kidneys
+        kidney_score += 10
+    
+    if kidney_score >= 35:
+        detected_conditions.append({
+            "disease": "Kidney Disease",
+            "risk_level": "High Risk" if kidney_score >= 60 else "Moderate Risk",
+            "score": min(kidney_score, 100),
+            "key_indicators": ["Elevated creatinine", "High urea", "Edema"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["kidney"]["tests"])
+        if kidney_score > total_risk_score:
+            total_risk_score = kidney_score
+            primary_disease = "Kidney"
+    
+    # 6. Liver Disease Risk Assessment
+    liver_score = 0
+    if features.get("alt", 0) >= 56:
+        liver_score += 30
+    elif features.get("alt", 0) >= 40:
+        liver_score += 15
+    if features.get("ast", 0) >= 48:
+        liver_score += 30
+    elif features.get("ast", 0) >= 35:
+        liver_score += 15
+    if features.get("bmi", 0) >= 30:  # Fatty liver risk
+        liver_score += 15
+    if features.get("fatigue", False):
+        liver_score += 10
+    
+    if liver_score >= 35:
+        detected_conditions.append({
+            "disease": "Liver Disease",
+            "risk_level": "High Risk" if liver_score >= 60 else "Moderate Risk",
+            "score": min(liver_score, 100),
+            "key_indicators": ["Elevated liver enzymes", "BMI", "Fatigue"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["liver"]["tests"])
+        if liver_score > total_risk_score:
+            total_risk_score = liver_score
+            primary_disease = "Liver"
+    
+    # 7. Anemia Risk Assessment
+    anemia_score = 0
+    hemoglobin = features.get("hemoglobin", 14)  # Default to normal
+    if hemoglobin > 0:
+        if hemoglobin <= 8:
+            anemia_score += 50
+        elif hemoglobin <= 10:
+            anemia_score += 35
+        elif hemoglobin <= 12:
+            anemia_score += 20
+    if features.get("fatigue", False):
+        anemia_score += 20
+    if features.get("shortness_of_breath", False):
+        anemia_score += 15
+    
+    if anemia_score >= 35:
+        detected_conditions.append({
+            "disease": "Anemia",
+            "risk_level": "High Risk" if anemia_score >= 55 else "Moderate Risk",
+            "score": min(anemia_score, 100),
+            "key_indicators": ["Low hemoglobin", "Fatigue", "Breathing difficulty"]
+        })
+        all_suggested_tests.update(DISEASE_CATEGORIES["anemia"]["tests"])
+        if anemia_score > total_risk_score:
+            total_risk_score = anemia_score
+            primary_disease = "Anemia"
+    
+    # Determine overall risk level
+    if total_risk_score >= 60:
+        overall_risk = "High Risk"
+    elif total_risk_score >= 35:
+        overall_risk = "Moderate Risk"
+    else:
+        overall_risk = "Low Risk"
+    
+    # If no specific conditions detected, provide general health check
+    if not detected_conditions:
+        all_suggested_tests = {"Complete Blood Count (CBC)", "Basic Metabolic Panel", "Lipid Profile", "Urinalysis"}
+        detected_conditions.append({
+            "disease": "General Health Check",
+            "risk_level": "Low Risk",
+            "score": total_risk_score,
+            "key_indicators": ["No major concerns detected"]
+        })
+    
+    return {
+        "overall_risk": overall_risk,
+        "risk_score": min(total_risk_score, 100),
+        "primary_disease": primary_disease,
+        "detected_conditions": detected_conditions,
+        "suggested_tests": list(all_suggested_tests)
+    }
 
 
 def log_alert_and_notify(patient, message):
@@ -182,8 +475,8 @@ def index():
 @role_required("patient")
 def patient_dashboard():
     patient = current_user.patient
-    visits = Visit.query.filter_by(patient_id=patient.id).order_by(Visit.created_at.desc()).limit(5)
-    appointments = Appointment.query.filter_by(patient_id=patient.id).order_by(Appointment.id.desc()).limit(5)
+    visits = Visit.query.filter_by(patient_id=patient.id).order_by(Visit.created_at.desc()).limit(5).all()
+    appointments = Appointment.query.filter_by(patient_id=patient.id).order_by(Appointment.id.desc()).limit(5).all()
     return render_template("patient_dashboard.html", patient=patient, visits=visits, appointments=appointments)
 
 
@@ -191,12 +484,100 @@ def patient_dashboard():
 @login_required
 @role_required("doctor")
 def doctor_dashboard():
-    high_risk_visits = (
-        Visit.query.filter_by(prediction="High Risk")
-        .order_by(Visit.created_at.desc())
-        .all()
+    # Get filter parameter
+    filter_status = request.args.get("status", "all")
+    filter_risk = request.args.get("risk", "all")
+    
+    # Base query - order by risk score and creation date
+    query = Visit.query.join(Patient).order_by(Visit.risk_score.desc(), Visit.created_at.desc())
+    
+    # Apply filters
+    if filter_status != "all":
+        query = query.filter(Visit.status == filter_status)
+    if filter_risk == "high":
+        query = query.filter(Visit.prediction == "High Risk")
+    elif filter_risk == "moderate":
+        query = query.filter(Visit.prediction == "Moderate Risk")
+    elif filter_risk == "low":
+        query = query.filter(Visit.prediction == "Low Risk")
+    
+    all_visits = query.all()
+    
+    # Statistics
+    pending_count = Visit.query.filter_by(status="Pending Review").count()
+    under_treatment_count = Visit.query.filter_by(status="Under Treatment").count()
+    treated_count = Visit.query.filter_by(status="Treated").count()
+    high_risk_count = Visit.query.filter_by(prediction="High Risk").count()
+    
+    return render_template(
+        "doctor_dashboard.html",
+        all_visits=all_visits,
+        pending_count=pending_count,
+        under_treatment_count=under_treatment_count,
+        treated_count=treated_count,
+        high_risk_count=high_risk_count,
+        filter_status=filter_status,
+        filter_risk=filter_risk,
+        DISEASE_CATEGORIES=DISEASE_CATEGORIES,
     )
-    return render_template("doctor_dashboard.html", high_risk_visits=high_risk_visits)
+
+
+@main_bp.route("/doctor/visit/<int:visit_id>", methods=["GET", "POST"])
+@login_required
+@role_required("doctor")
+def doctor_view_visit(visit_id):
+    visit_obj = Visit.query.get_or_404(visit_id)
+    patient = visit_obj.patient
+    
+    # Parse JSON fields
+    try:
+        detected_conditions = json.loads(visit_obj.predicted_conditions) if visit_obj.predicted_conditions else []
+    except:
+        detected_conditions = []
+    
+    try:
+        suggested_tests = json.loads(visit_obj.suggested_tests) if visit_obj.suggested_tests else []
+    except:
+        suggested_tests = []
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        
+        if action == "update_status":
+            new_status = request.form.get("status")
+            diagnosis = request.form.get("diagnosis", "").strip()
+            treatment_plan = request.form.get("treatment_plan", "").strip()
+            doctor_notes = request.form.get("doctor_notes", "").strip()
+            
+            if new_status in ["Pending Review", "Under Treatment", "Treated", "Follow-up Required"]:
+                visit_obj.status = new_status
+                visit_obj.diagnosis = diagnosis
+                visit_obj.treatment_plan = treatment_plan
+                visit_obj.doctor_notes = doctor_notes
+                visit_obj.reviewed_by = current_user.id
+                visit_obj.reviewed_at = datetime.utcnow()
+                db.session.commit()
+                
+                # Notify patient about status change
+                if new_status == "Treated":
+                    log_alert_and_notify(patient, f"Your visit has been marked as Treated by the doctor.")
+                elif new_status == "Under Treatment":
+                    log_alert_and_notify(patient, f"Your treatment has started. Please follow the prescribed plan.")
+                elif new_status == "Follow-up Required":
+                    log_alert_and_notify(patient, f"A follow-up visit is required. Please book an appointment.")
+                
+                flash(f"Visit status updated to '{new_status}'.", "success")
+        
+        return redirect(url_for("main.doctor_view_visit", visit_id=visit_id))
+    
+    return render_template(
+        "doctor_visit_detail.html",
+        visit=visit_obj,
+        patient=patient,
+        detected_conditions=detected_conditions,
+        suggested_tests=suggested_tests,
+        DISEASE_CATEGORIES=DISEASE_CATEGORIES,
+    )
 
 
 @main_bp.route("/admin/dashboard")
@@ -207,7 +588,7 @@ def admin_dashboard():
     total_patients = Patient.query.count()
     total_hospitals = Hospital.query.count()
     total_appointments = Appointment.query.count()
-    high_risk_alerts = Alert.query.order_by(Alert.timestamp.desc()).limit(20)
+    high_risk_alerts = Alert.query.order_by(Alert.timestamp.desc()).limit(20).all()
     return render_template(
         "admin_dashboard.html",
         hospitals=hospitals,
@@ -380,6 +761,7 @@ def visit():
 
     if request.method == "POST":
         try:
+            # Basic vitals (original)
             pregnancies = int(request.form.get("pregnancies", 0))
             glucose = float(request.form.get("glucose", 0))
             blood_pressure = float(request.form.get("blood_pressure", 0))
@@ -388,10 +770,34 @@ def visit():
             bmi = float(request.form.get("bmi", 0))
             dpf = float(request.form.get("dpf", 0))
             age = int(request.form.get("age", 0))
+            
+            # Extended vitals for comprehensive assessment
+            heart_rate = float(request.form.get("heart_rate", 0))
+            respiratory_rate = float(request.form.get("respiratory_rate", 0))
+            oxygen_saturation = float(request.form.get("oxygen_saturation", 98))
+            cholesterol = float(request.form.get("cholesterol", 0))
+            hdl = float(request.form.get("hdl", 0))
+            ldl = float(request.form.get("ldl", 0))
+            triglycerides = float(request.form.get("triglycerides", 0))
+            creatinine = float(request.form.get("creatinine", 0))
+            urea = float(request.form.get("urea", 0))
+            alt = float(request.form.get("alt", 0))
+            ast = float(request.form.get("ast", 0))
+            hemoglobin = float(request.form.get("hemoglobin", 0))
+            
+            # Symptoms (boolean)
+            chest_pain = request.form.get("chest_pain") == "on"
+            shortness_of_breath = request.form.get("shortness_of_breath") == "on"
+            fatigue = request.form.get("fatigue") == "on"
+            swelling = request.form.get("swelling") == "on"
+            smoking = request.form.get("smoking") == "on"
+            family_history = request.form.get("family_history", "").strip()
+            
         except ValueError:
-            flash("All fields must be valid numeric values.", "danger")
+            flash("All numeric fields must be valid numbers.", "danger")
             return render_template("visit.html")
 
+        # Build comprehensive feature dictionary
         feature_dict = {
             "pregnancies": pregnancies,
             "glucose": glucose,
@@ -401,32 +807,45 @@ def visit():
             "bmi": bmi,
             "dpf": dpf,
             "age": age,
+            "heart_rate": heart_rate,
+            "respiratory_rate": respiratory_rate,
+            "oxygen_saturation": oxygen_saturation,
+            "cholesterol": cholesterol,
+            "hdl": hdl,
+            "ldl": ldl,
+            "triglycerides": triglycerides,
+            "creatinine": creatinine,
+            "urea": urea,
+            "alt": alt,
+            "ast": ast,
+            "hemoglobin": hemoglobin,
+            "chest_pain": chest_pain,
+            "shortness_of_breath": shortness_of_breath,
+            "fatigue": fatigue,
+            "swelling": swelling,
+            "smoking": smoking,
+            "family_history": family_history,
         }
 
+        # Run comprehensive disease prediction
+        prediction_result = comprehensive_disease_predictor(feature_dict)
+        prediction_label = prediction_result["overall_risk"]
+        
+        # Also try ML model for diabetes specifically if available
         model = load_diabetes_model()
-        if model is not None:
+        if model is not None and glucose > 0:
             try:
-                X = [
-                    [
-                        pregnancies,
-                        glucose,
-                        blood_pressure,
-                        skin_thickness,
-                        insulin,
-                        bmi,
-                        dpf,
-                        age,
-                    ]
-                ]
+                X = [[pregnancies, glucose, blood_pressure, skin_thickness, insulin, bmi, dpf, age]]
                 pred = model.predict(X)[0]
-                prediction_label = "High Risk" if int(pred) == 1 else "Low Risk"
+                if int(pred) == 1 and prediction_label != "High Risk":
+                    prediction_label = "High Risk"
+                    prediction_result["risk_score"] = max(prediction_result["risk_score"], 60)
             except Exception:
-                prediction_label = simple_risk_scorer(feature_dict)
-        else:
-            prediction_label = simple_risk_scorer(feature_dict)
+                pass
 
         visit_obj = Visit(
             patient_id=patient.id,
+            # Basic vitals
             pregnancies=pregnancies,
             glucose=glucose,
             blood_pressure=blood_pressure,
@@ -435,14 +854,41 @@ def visit():
             bmi=bmi,
             dpf=dpf,
             age=age,
+            # Extended vitals
+            heart_rate=heart_rate,
+            respiratory_rate=respiratory_rate,
+            oxygen_saturation=oxygen_saturation,
+            cholesterol=cholesterol,
+            hdl=hdl,
+            ldl=ldl,
+            triglycerides=triglycerides,
+            creatinine=creatinine,
+            urea=urea,
+            alt=alt,
+            ast=ast,
+            hemoglobin=hemoglobin,
+            chest_pain=chest_pain,
+            shortness_of_breath=shortness_of_breath,
+            fatigue=fatigue,
+            swelling=swelling,
+            smoking=smoking,
+            family_history=family_history,
+            # Prediction results
             prediction=prediction_label,
+            disease_type=prediction_result["primary_disease"],
+            risk_score=prediction_result["risk_score"],
+            predicted_conditions=json.dumps(prediction_result["detected_conditions"]),
+            suggested_tests=json.dumps(prediction_result["suggested_tests"]),
+            status="Pending Review",
         )
         db.session.add(visit_obj)
         db.session.commit()
 
         high_risk_triggered = False
-        if prediction_label == "High Risk":
-            log_alert_and_notify(patient, "High Risk diabetes prediction. Doctor notified.")
+        if prediction_label in ["High Risk", "Moderate Risk"]:
+            conditions_list = [c["disease"] for c in prediction_result["detected_conditions"]]
+            message = f"{prediction_label} detected for: {', '.join(conditions_list)}. Doctor notified."
+            log_alert_and_notify(patient, message)
             high_risk_triggered = True
 
         return render_template(
@@ -450,6 +896,7 @@ def visit():
             visit=visit_obj,
             patient=patient,
             high_risk_triggered=high_risk_triggered,
+            prediction_result=prediction_result,
         )
 
     return render_template("visit.html")

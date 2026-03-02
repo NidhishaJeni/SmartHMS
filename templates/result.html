@@ -1,71 +1,153 @@
 {% extends "base.html" %}
-{% block title %}AI Result{% endblock %}
+{% block title %}Health Assessment Result{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-10 col-lg-8">
+  <div class="col-md-12 col-lg-10">
     {% if high_risk_triggered %}
       <div class="alert alert-danger shadow-sm mb-3">
-        <strong>High Risk detected.</strong> Doctor Notified via SmartHMS automation. You will be prioritized for review.
+        <strong>{{ visit.prediction }} detected.</strong> Doctor has been notified via SmartHMS automation. You will be prioritized for review.
       </div>
     {% else %}
       <div class="alert alert-success shadow-sm mb-3">
-        <strong>Low Risk.</strong> Your current values indicate a lower diabetes risk. Continue regular monitoring as advised.
+        <strong>Low Risk.</strong> No immediate health concerns detected. Continue regular monitoring as advised.
       </div>
     {% endif %}
 
-    <div class="card shadow-sm border-0">
+    <!-- Overall Risk Score Card -->
+    <div class="card shadow-sm border-0 mb-3">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h1 class="h6 mb-0 text-muted text-uppercase">Visit Summary</h1>
-        <span class="badge bg-{% if visit.prediction == 'High Risk' %}danger{% else %}success{% endif %}">
-          {{ visit.prediction }}
-        </span>
+        <h1 class="h6 mb-0 text-muted text-uppercase">Health Assessment Summary</h1>
+        <div>
+          <span class="badge bg-{% if visit.prediction == 'High Risk' %}danger{% elif visit.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %} me-2">
+            {{ visit.prediction }}
+          </span>
+          <span class="badge bg-secondary">Risk Score: {{ visit.risk_score }}/100</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3 bg-light h-100">
+              <div class="small text-muted text-uppercase">Patient</div>
+              <div class="fw-semibold">{{ patient.full_name }}</div>
+              <div class="small text-muted">Age {{ patient.age }}, {{ patient.gender }}</div>
+              <hr class="my-2">
+              <div class="small text-muted text-uppercase">Primary Concern</div>
+              <div class="fw-semibold text-primary">{{ visit.disease_type }}</div>
+              <hr class="my-2">
+              <div class="small text-muted text-uppercase">Status</div>
+              <span class="badge bg-info">{{ visit.status }}</span>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <h6 class="text-muted text-uppercase mb-2">Detected Conditions</h6>
+            {% if prediction_result and prediction_result.detected_conditions %}
+              {% for condition in prediction_result.detected_conditions %}
+                <div class="card mb-2 border-{% if condition.risk_level == 'High Risk' %}danger{% elif condition.risk_level == 'Moderate Risk' %}warning{% else %}success{% endif %}">
+                  <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <strong>{{ condition.disease }}</strong>
+                      <span class="badge bg-{% if condition.risk_level == 'High Risk' %}danger{% elif condition.risk_level == 'Moderate Risk' %}warning{% else %}success{% endif %}">
+                        {{ condition.risk_level }} ({{ condition.score }}%)
+                      </span>
+                    </div>
+                    <small class="text-muted">Key indicators: {{ condition.key_indicators | join(', ') }}</small>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted">No specific conditions detected.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggested Tests Card -->
+    {% if prediction_result and prediction_result.suggested_tests %}
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Recommended Diagnostic Tests</h2>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-2">Based on your health assessment, we recommend the following tests for accurate diagnosis:</p>
+        <div class="row">
+          {% for test in prediction_result.suggested_tests %}
+            <div class="col-md-4 col-6 mb-2">
+              <span class="badge bg-light text-dark border w-100 p-2">
+                <i class="text-primary">•</i> {{ test }}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Vital Signs Summary -->
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0 text-muted text-uppercase">Recorded Values</h2>
       </div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-6">
-            <div class="border rounded p-2 mb-2 bg-light">
-              <div class="small text-muted text-uppercase">Patient</div>
-              <div class="fw-semibold">{{ patient.full_name }}</div>
-              <div class="small text-muted">Age {{ patient.age }}, {{ patient.gender }}</div>
-            </div>
+            <h6 class="text-muted small">Basic Vitals</h6>
             <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Pregnancies</span><span>{{ visit.pregnancies }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
+              <li class="list-group-item d-flex justify-content-between py-1">
                 <span>Age</span><span>{{ visit.age }}</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Recorded At</span><span>{{ visit.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>BMI</span><span class="{% if visit.bmi >= 30 %}text-danger{% elif visit.bmi >= 25 %}text-warning{% endif %}">{{ visit.bmi }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Blood Pressure</span><span class="{% if visit.blood_pressure >= 140 %}text-danger{% elif visit.blood_pressure >= 130 %}text-warning{% endif %}">{{ visit.blood_pressure }} mmHg</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Heart Rate</span><span>{{ visit.heart_rate }} bpm</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Oxygen Saturation</span><span class="{% if visit.oxygen_saturation <= 92 %}text-danger{% elif visit.oxygen_saturation <= 95 %}text-warning{% endif %}">{{ visit.oxygen_saturation }}%</span>
               </li>
             </ul>
           </div>
           <div class="col-md-6">
+            <h6 class="text-muted small">Blood Tests</h6>
             <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Glucose</span><span>{{ visit.glucose }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Glucose</span><span class="{% if visit.glucose >= 126 %}text-danger{% elif visit.glucose >= 100 %}text-warning{% endif %}">{{ visit.glucose }} mg/dL</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Blood Pressure</span><span>{{ visit.blood_pressure }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Cholesterol</span><span class="{% if visit.cholesterol >= 240 %}text-danger{% elif visit.cholesterol >= 200 %}text-warning{% endif %}">{{ visit.cholesterol }} mg/dL</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Skin Thickness</span><span>{{ visit.skin_thickness }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Hemoglobin</span><span class="{% if visit.hemoglobin <= 10 and visit.hemoglobin > 0 %}text-danger{% elif visit.hemoglobin <= 12 and visit.hemoglobin > 0 %}text-warning{% endif %}">{{ visit.hemoglobin }} g/dL</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Insulin</span><span>{{ visit.insulin }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>Creatinine</span><span class="{% if visit.creatinine >= 1.5 %}text-danger{% elif visit.creatinine >= 1.2 %}text-warning{% endif %}">{{ visit.creatinine }} mg/dL</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>BMI</span><span>{{ visit.bmi }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Diabetes Pedigree Function (DPF)</span><span>{{ visit.dpf }}</span>
+              <li class="list-group-item d-flex justify-content-between py-1">
+                <span>ALT/AST</span><span>{{ visit.alt }}/{{ visit.ast }} U/L</span>
               </li>
             </ul>
           </div>
         </div>
+        
+        {% if visit.chest_pain or visit.shortness_of_breath or visit.fatigue or visit.swelling or visit.smoking %}
+        <div class="mt-3">
+          <h6 class="text-muted small">Reported Symptoms</h6>
+          <div class="d-flex flex-wrap gap-2">
+            {% if visit.chest_pain %}<span class="badge bg-danger">Chest Pain</span>{% endif %}
+            {% if visit.shortness_of_breath %}<span class="badge bg-warning text-dark">Shortness of Breath</span>{% endif %}
+            {% if visit.fatigue %}<span class="badge bg-warning text-dark">Fatigue</span>{% endif %}
+            {% if visit.swelling %}<span class="badge bg-warning text-dark">Swelling</span>{% endif %}
+            {% if visit.smoking %}<span class="badge bg-secondary">Smoker</span>{% endif %}
+          </div>
+        </div>
+        {% endif %}
       </div>
       <div class="card-footer bg-white d-flex justify-content-between">
-        <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary btn-sm">Run Another Prediction</a>
+        <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary btn-sm">New Assessment</a>
         <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-primary btn-sm">Back to Dashboard</a>
       </div>
     </div>
