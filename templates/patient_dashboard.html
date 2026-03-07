@@ -1,171 +1,285 @@
 {% extends "base.html" %}
-{% block title %}Patient Dashboard{% endblock %}
+{% block title %}Patient Dashboard - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .welcome-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-size: 0.875rem;
+        color: #1e40af;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+    
+    .list-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: background 0.2s ease;
+    }
+    
+    .list-item:hover {
+        background: #f8fafc;
+    }
+    
+    .list-item-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+    
+    .list-item-content {
+        flex: 1;
+    }
+    
+    .list-item-title {
+        font-weight: 500;
+        color: #0f172a;
+    }
+    
+    .list-item-subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        color: white;
+    }
+    
+    .btn-outline {
+        border: 2px solid #e2e8f0;
+        color: #475569;
+    }
+    
+    .btn-outline:hover {
+        border-color: #3b82f6;
+        color: #1c7ed6;
+    }
+    
+    .alert-item {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .alert-warning {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+    }
+    
+    .alert-info {
+        background: #eff6ff;
+        border-left: 3px solid #3b82f6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12 col-lg-8">
-    <h1 class="h4 mb-1 text-primary">Welcome, {{ patient.full_name if patient else current_user.username }}</h1>
-    <p class="text-muted mb-0">Your health overview, appointments, and AI-powered health assessments.</p>
-  </div>
-  <div class="col-12 col-lg-4 mt-3 mt-lg-0 text-lg-end">
-    <a href="{{ url_for('main.book_appointment') }}" class="btn btn-primary me-2 mb-2">Book Appointment</a>
-    <a href="{{ url_for('main.visit') }}" class="btn btn-outline-primary mb-2">Health Assessment</a>
-  </div>
+<div class="dashboard-header">
+    <h1>Welcome, {{ patient.full_name }}</h1>
+    <p class="text-muted">Manage your health records and appointments</p>
 </div>
 
-{% if not patient %}
-  <div class="alert alert-warning shadow-sm">
-    No patient profile found. <a href="{{ url_for('main.create_profile') }}" class="alert-link">Create your profile now</a> to enable appointments and health assessments.
-  </div>
-{% endif %}
-
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white">
-        <h2 class="h6 mb-0 text-muted text-uppercase">Recent Appointments</h2>
-      </div>
-      <div class="card-body">
-        {% if appointments %}
-          <ul class="list-group list-group-flush">
-            {% for a in appointments %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="fw-semibold">{{ a.hospital.name if a.hospital else "Unknown Hospital" }}</div>
-                  <small class="text-muted">Date: {{ a.date }} &middot; Status: {{ a.status }}</small>
-                </div>
-                {% if a.qr_code %}
-                  <a href="{{ url_for('static', filename=a.qr_code) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                    View QR
-                  </a>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-          <a href="{{ url_for('main.appointments_view') }}" class="btn btn-link btn-sm mt-2">View all appointments</a>
-        {% else %}
-          <p class="text-muted mb-0">No appointments yet.</p>
-        {% endif %}
-      </div>
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #dcfce7, #86efac);">📅</div>
+        <div class="stat-value">{{ appointments|length }}</div>
+        <div class="stat-label">Appointments</div>
     </div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h6 mb-0 text-muted text-uppercase">Health Assessments & Treatment Status</h2>
-      </div>
-      <div class="card-body">
-        {% if visits %}
-          <ul class="list-group list-group-flush">
-            {% for v in visits %}
-              <li class="list-group-item">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                  <div>
-                    <span class="fw-semibold">{{ v.disease_type or 'General' }}</span>
-                    <span class="badge bg-{% if v.prediction == 'High Risk' %}danger{% elif v.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %} ms-1">
-                      {{ v.prediction }}
-                    </span>
-                  </div>
-                  <span class="badge bg-{% if v.status == 'Pending Review' %}warning{% elif v.status == 'Under Treatment' %}info{% elif v.status == 'Treated' %}success{% else %}secondary{% endif %}">
-                    {{ v.status }}
-                  </span>
-                </div>
-                <small class="text-muted d-block">
-                  Risk Score: {{ v.risk_score }}/100 &middot; {{ v.created_at.strftime('%Y-%m-%d') }}
-                </small>
-                {% if v.diagnosis %}
-                  <div class="mt-1 small">
-                    <strong>Diagnosis:</strong> {{ v.diagnosis }}
-                  </div>
-                {% endif %}
-                {% if v.treatment_plan %}
-                  <div class="mt-1 small">
-                    <strong>Treatment:</strong> {{ v.treatment_plan[:100] }}{% if v.treatment_plan|length > 100 %}...{% endif %}
-                  </div>
-                {% endif %}
-                {% if v.doctor_notes %}
-                  <div class="mt-1 small text-info">
-                    <strong>Doctor's Note:</strong> {{ v.doctor_notes[:100] }}{% if v.doctor_notes|length > 100 %}...{% endif %}
-                  </div>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-          <a href="{{ url_for('main.visit') }}" class="btn btn-link btn-sm mt-2">New Health Assessment</a>
-        {% else %}
-          <p class="text-muted mb-0">No health assessments recorded yet.</p>
-        {% endif %}
-      </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #dbeafe, #93c5fd);">🧾</div>
+        <div class="stat-value">{{ visits|length }}</div>
+        <div class="stat-label">Health Assessments</div>
     </div>
-  </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fce7f3, #f9a8d4);">🔔</div>
+        <div class="stat-value">{{ alerts|length }}</div>
+        <div class="stat-label">Notifications</div>
+    </div>
 </div>
 
-{% if patient %}
-<!-- Health Summary Card -->
-<div class="row mt-3">
-  <div class="col-12">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white">
-        <h2 class="h6 mb-0 text-muted text-uppercase">What Our AI Health Assessment Covers</h2>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">1</span>
-              <span>Diabetes Mellitus</span>
+<div class="row g-4">
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">Quick Actions</h2>
             </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">2</span>
-              <span>Cardiovascular Disease</span>
+            <div class="d-grid gap-2">
+                <a href="/book" class="action-btn btn-primary">
+                    <span>📅</span> Book Appointment
+                </a>
+                <a href="/profile/create" class="action-btn btn-outline">
+                    <span>👤</span> Update Profile
+                </a>
+                <a href="/hospitals" class="action-btn btn-outline">
+                    <span>🏥</span> View Hospitals
+                </a>
             </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">3</span>
-              <span>Hypertension</span>
-            </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">4</span>
-              <span>Respiratory Disease</span>
-            </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">5</span>
-              <span>Kidney Disease</span>
-            </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">6</span>
-              <span>Liver Disease</span>
-            </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">7</span>
-              <span>Anemia</span>
-            </div>
-          </div>
-          <div class="col-md-4 mb-2">
-            <div class="d-flex align-items-center">
-              <span class="badge bg-primary me-2">8</span>
-              <span>Thyroid Disorders</span>
-            </div>
-          </div>
         </div>
-        <p class="text-muted small mt-2 mb-0">
-          Our AI system analyzes your vitals and symptoms to detect potential health risks and recommends appropriate diagnostic tests.
-        </p>
-      </div>
     </div>
-  </div>
+    
+    <!-- Recent Appointments -->
+    <div class="col-lg-8">
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">Recent Appointments</h2>
+                <a href="/appointments" class="btn-link">View All</a>
+            </div>
+            {% if appointments %}
+                {% for apt in appointments[:5] %}
+                <div class="list-item">
+                    <div class="list-item-icon" style="background: #e0f2fe;">📅</div>
+                    <div class="list-item-content">
+                        <div class="list-item-title">{{ apt.date }}</div>
+                        <div class="list-item-subtitle">Status: {{ apt.status }}</div>
+                    </div>
+                    <span class="badge bg-{% if apt.status == 'Completed' %}success{% elif apt.status == 'Arrived' %}info{% else %}warning{% endif %}">
+                        {{ apt.status }}
+                    </span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No appointments yet. <a href="/book">Book one now</a></p>
+            {% endif %}
+        </div>
+    </div>
 </div>
-{% endif %}
+
+<!-- Recent Visits & Alerts -->
+<div class="row g-4 mt-2">
+    <div class="col-lg-6">
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">Recent Health Assessments</h2>
+            </div>
+            {% if visits %}
+                {% for visit in visits[:3] %}
+                <div class="list-item">
+                    <div class="list-item-icon" style="background: #f3e8ff;">🧠</div>
+                    <div class="list-item-content">
+                        <div class="list-item-title">{{ visit.disease_type }}</div>
+                        <div class="list-item-subtitle">{{ visit.created_at.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    <span class="badge bg-{% if visit.prediction == 'High Risk' %}danger{% elif visit.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %}">
+                        {{ visit.prediction }}
+                    </span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No health assessments yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">Notifications</h2>
+            </div>
+            {% if alerts %}
+                {% for alert in alerts[:3] %}
+                <div class="alert-item {% if alert.alert_type == 'Critical' %}alert-warning{% else %}alert-info{% endif %}">
+                    <div class="small">{{ alert.message }}</div>
+                    <div class="text-muted small">{{ alert.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No notifications.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
 

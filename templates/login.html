@@ -1,35 +1,164 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Login - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #64748b;
+    }
+    
+    .auth-footer a {
+        color: #1c7ed6;
+        font-weight: 500;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid;
+    }
+    
+    .alert-danger {
+        background: #fef2f2;
+        border-color: #ef4444;
+        color: #991b1b;
+    }
+    
+    .alert-success {
+        background: #f0fdf4;
+        border-color: #22c55e;
+        color: #166534;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6 col-lg-4">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h1 class="h5 mb-3 text-center text-primary">Login to SmartHMS</h1>
-        <form method="post" novalidate>
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100 mb-2">Login</button>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Welcome Back</h1>
+            <p>Login to your SmartHMS account</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if registered %}
+        <div class="alert alert-success">
+            Registration successful! Please login with your credentials.
+        </div>
+        {% endif %}
+        
+        <form method="post" action="/login">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" required>
+            </div>
+            
+            <button type="submit" class="btn-primary">Login</button>
         </form>
-        <p class="small text-muted mt-2 mb-0">
-          No account? <a href="{{ url_for('auth.register') }}">Register here</a>.
-        </p>
-        <hr>
-        <p class="small text-muted mb-0">
-          Demo users:<br>
-          Admin: <code>admin / admin123</code><br>
-          Doctor: <code>doctor / doctor123</code><br>
-          Patient: <code>patient / patient123</code>
-        </p>
-      </div>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="/register">Register here</a>
+        </div>
+        
+        <div class="mt-4 pt-4 border-top">
+            <p class="small text-muted text-center mb-2">Demo Credentials:</p>
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <span class="badge bg-secondary">Admin: admin/admin123</span>
+                <span class="badge bg-secondary">Doctor: doctor/doctor123</span>
+                <span class="badge bg-secondary">Patient: patient/patient123</span>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 

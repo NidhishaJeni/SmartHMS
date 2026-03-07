@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Health Assessment - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    
+    .form-section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 1rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-item input {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🧠 Health Assessment</h1>
+    <p class="text-muted">Record patient health data and get AI-powered risk assessment</p>
+</div>
+
+<div class="form-card">
+    <form method="post" action="/nurse/visit">
+        <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+        
+        <!-- Patient Selection -->
+        <div class="form-section">
+            <div class="form-section-title">Patient Information</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="patient_id">Select Patient *</label>
+                    <select name="patient_id" id="patient_id" class="form-input" required>
+                        <option value="">-- Select Patient --</option>
+                        {% for patient in patients %}
+                        <option value="{{ patient.id }}">{{ patient.full_name }} ({{ patient.age }} years, {{ patient.gender }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="doctor_id">Assign to Doctor (Optional)</label>
+                    <select name="doctor_id" id="doctor_id" class="form-input">
+                        <option value="">-- No Specific Doctor --</option>
+                        {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }} - {{ doctor.specialization }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Health Data -->
+        <div class="form-section">
+            <div class="form-section-title">Basic Health Data</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" name="age" id="age" class="form-input" placeholder="Patient Age">
+                </div>
+                <div class="form-group">
+                    <label for="pregnancies">Pregnancies (for females)</label>
+                    <input type="number" name="pregnancies" id="pregnancies" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="glucose">Glucose (mg/dL)</label>
+                    <input type="number" step="0.1" name="glucose" id="glucose" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="blood_pressure">Blood Pressure (mmHg)</label>
+                    <input type="number" step="0.1" name="blood_pressure" id="blood_pressure" class="form-input" value="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="skin_thickness">Skin Thickness (mm)</label>
+                    <input type="number" step="0.1" name="skin_thickness" id="skin_thickness" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="insulin">Insulin (mu U/ml)</label>
+                    <input type="number" step="0.1" name="insulin" id="insulin" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="bmi">BMI</label>
+                    <input type="number" step="0.1" name="bmi" id="bmi" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="dpf">Diabetes Pedigree Function</label>
+                    <input type="number" step="0.01" name="dpf" id="dpf" class="form-input" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Vital Signs -->
+        <div class="form-section">
+            <div class="form-section-title">Vital Signs</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="heart_rate">Heart Rate (bpm)</label>
+                    <input type="number" step="0.1" name="heart_rate" id="heart_rate" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="respiratory_rate">Respiratory Rate (breaths/min)</label>
+                    <input type="number" step="0.1" name="respiratory_rate" id="respiratory_rate" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="oxygen_saturation">Oxygen Saturation (%)</label>
+                    <input type="number" step="0.1" name="oxygen_saturation" id="oxygen_saturation" class="form-input" value="98">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lipid Profile -->
+        <div class="form-section">
+            <div class="form-section-title">Lipid Profile</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cholesterol">Total Cholesterol (mg/dL)</label>
+                    <input type="number" step="0.1" name="cholesterol" id="cholesterol" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hdl">HDL Cholesterol (mg/dL)</label>
+                    <input type="number" step="0.1" name="hdl" id="hdl" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="ldl">LDL Cholesterol (mg/dL)</label>
+                    <input type="number" step="0.1" name="ldl" id="ldl" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="triglycerides">Triglycerides (mg/dL)</label>
+                    <input type="number" step="0.1" name="triglycerides" id="triglycerides" class="form-input" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Kidney & Liver Function -->
+        <div class="form-section">
+            <div class="form-section-title">Kidney & Liver Function</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="creatinine">Creatinine (mg/dL)</label>
+                    <input type="number" step="0.01" name="creatinine" id="creatinine" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="urea">Urea (mg/dL)</label>
+                    <input type="number" step="0.1" name="urea" id="urea" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="alt">ALT (U/L)</label>
+                    <input type="number" step="0.1" name="alt" id="alt" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="ast">AST (U/L)</label>
+                    <input type="number" step="0.1" name="ast" id="ast" class="form-input" value="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hemoglobin">Hemoglobin (g/dL)</label>
+                    <input type="number" step="0.1" name="hemoglobin" id="hemoglobin" class="form-input" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="form-section">
+            <div class="form-section-title">Current Symptoms</div>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" name="chest_pain" id="chest_pain" value="true">
+                    <label for="chest_pain">Chest Pain</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="shortness_of_breath" id="shortness_of_breath" value="true">
+                    <label for="shortness_of_breath">Shortness of Breath</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="fatigue" id="fatigue" value="true">
+                    <label for="fatigue">Fatigue</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="swelling" id="swelling" value="true">
+                    <label for="swelling">Swelling</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="smoking" id="smoking" value="true">
+                    <label for="smoking">Smoking</label>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="family_history">Family Medical History</label>
+                <input type="text" name="family_history" id="family_history" class="form-input" placeholder="e.g., Diabetes, Heart Disease, Hypertension">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Analyze Health Risk</button>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,37 +1,226 @@
 {% extends "base.html" %}
-{% block title %}Register{% endblock %}
+{% block title %}Register - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 450px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #64748b;
+    }
+    
+    .auth-footer a {
+        color: #1c7ed6;
+        font-weight: 500;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid;
+    }
+    
+    .alert-danger {
+        background: #fef2f2;
+        border-color: #ef4444;
+        color: #991b1b;
+    }
+    
+    .role-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .role-option {
+        position: relative;
+    }
+    
+    .role-option input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .role-option label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    
+    .role-option label:hover {
+        border-color: #3b82f6;
+        background: #f0f7ff;
+    }
+    
+    .role-option input:checked + label {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    
+    .role-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .role-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #334155;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6 col-lg-5">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h1 class="h5 mb-3 text-center text-primary">Create SmartHMS Account</h1>
-        <form method="post" novalidate>
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Role</label>
-            <select name="role" class="form-select" required>
-              <option value="" selected disabled>Select role</option>
-              <option value="patient">Patient</option>
-              <option value="doctor">Doctor</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary w-100 mb-2">Register</button>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Create Account</h1>
+            <p>Join SmartHMS healthcare platform</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="post" action="/register">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select Your Role</label>
+                <div class="role-grid">
+                    <div class="role-option">
+                        <input type="radio" id="role_patient" name="role" value="patient" required>
+                        <label for="role_patient">
+                            <span class="role-icon">👤</span>
+                            <span class="role-name">Patient</span>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="role_doctor" name="role" value="doctor">
+                        <label for="role_doctor">
+                            <span class="role-icon">👨‍⚕️</span>
+                            <span class="role-name">Doctor</span>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="role_nurse" name="role" value="nurse">
+                        <label for="role_nurse">
+                            <span class="role-icon">👩‍⚕️</span>
+                            <span class="role-name">Nurse</span>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="role_lab_tech" name="role" value="lab_tech">
+                        <label for="role_lab_tech">
+                            <span class="role-icon">🔬</span>
+                            <span class="role-name">Lab Tech</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">Create Account</button>
         </form>
-        <p class="small text-muted mb-0 mt-2">
-          Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>.
-        </p>
-      </div>
+        
+        <div class="auth-footer">
+            Already have an account? <a href="/login">Login here</a>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 

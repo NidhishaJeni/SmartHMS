@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{% if staff %}Update Profile{% else %}Create Profile{% endif %} - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .form-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>{% if staff %}Update Your Profile{% else %}Create Your Profile{% endif %}</h1>
+            <p class="text-muted">Please fill in your professional details</p>
+        </div>
+        
+        <form method="post" action="/staff/profile/create">
+            <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+            
+            <div class="form-group">
+                <label for="full_name">Full Name *</label>
+                <input type="text" id="full_name" name="full_name" class="form-input" value="{{ staff.full_name if staff else '' }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="specialization">Specialization (for doctors)</label>
+                <input type="text" id="specialization" name="specialization" class="form-input" value="{{ doctor.specialization if doctor else '' }}" placeholder="e.g., General Medicine, Cardiology">
+            </div>
+            
+            <div class="form-group">
+                <label for="license_number">License Number *</label>
+                <input type="text" id="license_number" name="license_number" class="form-input" value="{{ staff.license_number if staff else '' }}" required placeholder="Medical license number">
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" class="form-input" value="{{ staff.phone if staff else '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="hospital_id">Hospital *</label>
+                <select id="hospital_id" name="hospital_id" class="form-select" required>
+                    <option value="">Select Hospital</option>
+                    {% for hospital in hospitals %}
+                    <option value="{{ hospital.id }}" {% if staff and staff.hospital_id == hospital.id %}selected{% endif %}>{{ hospital.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-primary">{% if staff %}Update Profile{% else %}Create Profile{% endif %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

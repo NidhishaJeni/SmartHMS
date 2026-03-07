@@ -1,46 +1,296 @@
 {% extends "base.html" %}
-{% block title %}Book Appointment{% endblock %}
-{% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8 col-lg-6">
-    <div class="card shadow-sm border-0 mb-3">
-      <div class="card-body">
-        <h1 class="h5 mb-3 text-primary">Smart Appointment Booking</h1>
-        <p class="text-muted small mb-3">
-          SmartHMS checks live bed availability before confirming your appointment and recommends alternative hospitals when needed.
-        </p>
-        <form method="post" novalidate>
-          <div class="mb-3">
-            <label class="form-label">Hospital</label>
-            <select name="hospital_id" class="form-select" required>
-              <option value="" selected disabled>Select hospital</option>
-              {% for h in hospitals %}
-                <option value="{{ h.id }}">
-                  {{ h.name }} ({{ h.available_beds }} / {{ h.total_beds }} beds available)
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Preferred Date</label>
-            <input type="date" name="date" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Book Appointment</button>
-        </form>
-      </div>
-    </div>
+{% block title %}Book Appointment - SmartHMS{% endblock %}
 
-    {% if recommendation %}
-      <div class="alert alert-info shadow-sm">
-        <h2 class="h6 text-primary mb-1">Recommended Hospital</h2>
-        <p class="mb-0 small">
-          <strong>{{ recommendation.name }}</strong> currently has
-          <strong>{{ recommendation.available_beds }}</strong> beds available out of {{ recommendation.total_beds }}.
-          Consider booking there for better availability.
-        </p>
-      </div>
-    {% endif %}
-  </div>
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .form-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    
+    .form-select:disabled {
+        background: #e2e8f0;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    .hospital-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .hospital-card:hover {
+        border-color: #3b82f6;
+        background: #f8fafc;
+    }
+    
+    .hospital-card.selected {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    
+    .hospital-card h4 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hospital-card .beds {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #ccc;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-left: 8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .help-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>Book an Appointment</h1>
+            <p class="text-muted">Select a hospital and schedule your visit</p>
+        </div>
+        
+        <form method="post" action="/book?token={{ request.query_params.get('token', '') }}">
+            <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+            <div class="form-group">
+                <label for="hospital_id">Select Hospital</label>
+                {% if hospitals %}
+                    {% for hospital in hospitals %}
+                    <div class="hospital-card" onclick="selectHospital({{ hospital.id }}); document.getElementById('hospital_{{ hospital.id }}').checked = true">
+                        <input type="radio" id="hospital_{{ hospital.id }}" name="hospital_id" value="{{ hospital.id }}" required style="display: none;">
+                        <h4>{{ hospital.name }}</h4>
+                        <p class="beds">{{ hospital.address or 'Address not specified' }}</p>
+                        <span class="badge bg-{% if hospital.available_beds == 0 %}danger{% elif hospital.available_beds < 10 %}warning{% else %}success{% endif %}">
+                            {{ hospital.available_beds }} beds available
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No hospitals available. Please try again later.</p>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Select Category/Specialization</label>
+                <select id="category" name="category" class="form-select" disabled onchange="loadDoctors()">
+                    <option value="">-- Select a hospital first --</option>
+                </select>
+                <p class="help-text">Choose a category after selecting a hospital</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="doctor_id">Select Doctor (Optional)</label>
+                <select id="doctor_id" name="doctor_id" class="form-select" disabled>
+                    <option value="">-- Select a category first --</option>
+                </select>
+                <p class="help-text">Leave as "General Practitioner" if no specific doctor needed</p>
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="date">Appointment Date</label>
+                        <input type="date" id="date" name="date" class="form-input" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="time">Preferred Time</label>
+                        <input type="time" id="time" name="time" class="form-input">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes (Optional)</label>
+                <textarea id="notes" name="notes" class="form-input" rows="3" placeholder="Any additional information..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary">Book Appointment</button>
+        </form>
+    </div>
 </div>
+
+<script>
+    // Set minimum date to today
+    document.getElementById('date').min = new Date().toISOString().split('T')[0];
+    
+    var selectedHospitalId = null;
+    
+    function selectHospital(hospitalId) {
+        selectedHospitalId = hospitalId;
+        // Reset category and doctor dropdowns
+        var categorySelect = document.getElementById('category');
+        var doctorSelect = document.getElementById('doctor_id');
+        
+        categorySelect.innerHTML = '<option value="">Loading categories...</option>';
+        categorySelect.disabled = true;
+        doctorSelect.innerHTML = '<option value="">-- Select a category first --</option>';
+        doctorSelect.disabled = true;
+        
+        // Fetch categories for the selected hospital
+        fetch('/api/hospitals/' + hospitalId + '/categories')
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.categories && data.categories.length > 0) {
+                    categorySelect.innerHTML = '<option value="">-- Select a category --</option>';
+                    data.categories.forEach(function(cat) {
+                        var option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        categorySelect.appendChild(option);
+                    });
+                    categorySelect.disabled = false;
+                } else {
+                    categorySelect.innerHTML = '<option value="">No categories available</option>';
+                }
+            })
+            .catch(function(error) {
+                console.error('Error loading categories:', error);
+                categorySelect.innerHTML = '<option value="">Error loading categories</option>';
+            });
+    }
+    
+    function loadDoctors() {
+        var categorySelect = document.getElementById('category');
+        var doctorSelect = document.getElementById('doctor_id');
+        var selectedCategory = categorySelect.value;
+        
+        if (!selectedCategory || !selectedHospitalId) {
+            doctorSelect.innerHTML = '<option value="">-- Select a category first --</option>';
+            doctorSelect.disabled = true;
+            return;
+        }
+        
+        doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+        doctorSelect.disabled = true;
+        
+        // Encode the category for URL
+        var encodedCategory = encodeURIComponent(selectedCategory);
+        fetch('/api/hospitals/' + selectedHospitalId + '/categories/' + encodedCategory + '/doctors')
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.doctors && data.doctors.length > 0) {
+                    doctorSelect.innerHTML = '<option value="">General Practitioner</option>';
+                    data.doctors.forEach(function(doc) {
+                        var option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = doc.full_name + ' - ' + doc.specialization;
+                        doctorSelect.appendChild(option);
+                    });
+                    doctorSelect.disabled = false;
+                } else {
+                    doctorSelect.innerHTML = '<option value="">No doctors available in this category</option>';
+                }
+            })
+            .catch(function(error) {
+                console.error('Error loading doctors:', error);
+                doctorSelect.innerHTML = '<option value="">Error loading doctors</option>';
+            });
+    }
+    
+    // Handle hospital selection via radio buttons
+    document.querySelectorAll('input[name="hospital_id"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                var hospitalId = this.value;
+                selectHospital(hospitalId);
+            }
+        });
+    });
+</script>
 {% endblock %}
 

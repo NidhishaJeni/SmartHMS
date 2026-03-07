@@ -1,103 +1,111 @@
 {% extends "base.html" %}
-{% block title %}Hospitals{% endblock %}
+{% block title %}Hospitals - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    .hospital-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .hospital-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+    
+    .hospital-info {
+        flex: 1;
+    }
+    
+    .hospital-info h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hospital-info p {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .bed-progress {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .bed-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        border-radius: 4px;
+    }
+    
+    .bed-progress-bar.warning {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+    
+    .bed-progress-bar.danger {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12 d-flex justify-content-between align-items-center">
-    <div>
-      <h1 class="h4 mb-1 text-primary">Hospitals</h1>
-      <p class="text-muted mb-0">Real-time bed availability across all hospitals.</p>
-    </div>
-  </div>
+<div class="page-header">
+    <h1>Our Partner Hospitals</h1>
+    <p class="text-muted">Find healthcare providers near you</p>
 </div>
 
-{% if current_user.role == 'admin' %}
-  <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-white">
-      <h2 class="h6 mb-0 text-muted text-uppercase">Add / Edit Hospital</h2>
+{% if hospitals %}
+    {% for h in hospitals %}
+    <div class="hospital-card">
+        <div class="hospital-icon">🏥</div>
+        <div class="hospital-info">
+            <h3>{{ h.name }}</h3>
+            <p>{{ h.address or 'Address not specified' }}</p>
+            <p>{{ h.phone or '' }}</p>
+            <div class="mt-2">
+                {% set utilization = ((h.total_beds - h.available_beds) / h.total_beds * 100) if h.total_beds > 0 else 0 %}
+                <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
+                    {{ h.available_beds }} beds available
+                </span>
+                <small class="text-muted ms-2">{{ utilization|round(0) }}% occupied</small>
+            </div>
+            <div class="bed-progress">
+                <div class="bed-progress-bar {% if utilization > 80 %}danger{% elif utilization > 60 %}warning{% endif %}" style="width: {{ utilization }}%;"></div>
+            </div>
+        </div>
+        {% if user and user.is_authenticated and user.role == 'patient' %}
+        <a href="/book?hospital={{ h.id }}" class="btn btn-primary">Book Appointment</a>
+        {% endif %}
     </div>
-    <div class="card-body">
-      <form method="post" class="row g-2">
-        <input type="hidden" name="hospital_id" id="hospital_id">
-        <div class="col-md-4">
-          <label class="form-label">Name</label>
-          <input type="text" name="name" id="h_name" class="form-control" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Total Beds</label>
-          <input type="number" name="total_beds" id="h_total" class="form-control" min="0" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Available Beds</label>
-          <input type="number" name="available_beds" id="h_available" class="form-control" min="0" required>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100">Save</button>
-        </div>
-      </form>
-      <p class="small text-muted mt-2 mb-0">
-        Click the edit icon next to a hospital to pre-fill this form.
-      </p>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <div style="font-size: 4rem;">🏥</div>
+        <h3>No Hospitals Available</h3>
+        <p class="text-muted">Check back later for hospital listings.</p>
     </div>
-  </div>
 {% endif %}
-
-<div class="card shadow-sm border-0">
-  <div class="card-header bg-white">
-    <h2 class="h6 mb-0 text-muted text-uppercase">Hospital Table</h2>
-  </div>
-  <div class="card-body">
-    {% if hospitals %}
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead>
-            <tr class="text-muted small">
-              <th>Hospital</th>
-              <th class="text-center">Total Beds</th>
-              <th class="text-center">Available Beds</th>
-              {% if current_user.role == 'admin' %}
-                <th class="text-center">Actions</th>
-              {% endif %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for h in hospitals %}
-              <tr>
-                <td>{{ h.name }}</td>
-                <td class="text-center">{{ h.total_beds }}</td>
-                <td class="text-center">
-                  <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
-                    {{ h.available_beds }}
-                  </span>
-                </td>
-                {% if current_user.role == 'admin' %}
-                  <td class="text-center">
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm"
-                      onclick="fillHospitalForm('{{ h.id }}', '{{ h.name|escape }}', '{{ h.total_beds }}', '{{ h.available_beds }}')"
-                    >
-                      Edit
-                    </button>
-                  </td>
-                {% endif %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="text-muted mb-0">No hospitals configured yet.</p>
-    {% endif %}
-  </div>
-</div>
-
-<script>
-  function fillHospitalForm(id, name, total, available) {
-    document.getElementById('hospital_id').value = id;
-    document.getElementById('h_name').value = name;
-    document.getElementById('h_total').value = total;
-    document.getElementById('h_available').value = available;
-  }
-</script>
 {% endblock %}
 

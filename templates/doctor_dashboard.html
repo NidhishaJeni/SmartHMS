@@ -1,147 +1,256 @@
 {% extends "base.html" %}
-{% block title %}Doctor Dashboard{% endblock %}
+{% block title %}Doctor Dashboard - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover, .stat-card.active {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(15, 23, 42, 0.12);
+    }
+    
+    .stat-card.active {
+        border: 2px solid #3b82f6;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .patient-table {
+        width: 100%;
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+    }
+    
+    .patient-table th {
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .patient-table td {
+        padding: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .patient-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .risk-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .risk-high {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    .risk-moderate {
+        background: #fffbeb;
+        color: #d97706;
+    }
+    
+    .risk-low {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+    
+    .btn-view {
+        padding: 0.375rem 0.75rem;
+        background: #3b82f6;
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .btn-view:hover {
+        background: #2563eb;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        background: white;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12">
-    <h1 class="h4 mb-1 text-primary">Doctor Dashboard</h1>
-    <p class="text-muted mb-0">Comprehensive view of patient health assessments and treatment tracking.</p>
-  </div>
+<div class="dashboard-header">
+    <h1>Doctor Dashboard</h1>
+    <p class="text-muted">Manage patient care and treatment</p>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row g-3 mb-3">
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Pending Review</div>
-        <div class="metric-value text-warning">{{ pending_count }}</div>
-      </div>
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card {% if filter_status == 'Pending Review' %}active{% endif %}">
+        <div class="stat-value text-warning">{{ pending_count }}</div>
+        <div class="stat-label">Pending Review</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Under Treatment</div>
-        <div class="metric-value text-info">{{ under_treatment_count }}</div>
-      </div>
+    <div class="stat-card {% if filter_status == 'Under Treatment' %}active{% endif %}">
+        <div class="stat-value text-info">{{ under_treatment_count }}</div>
+        <div class="stat-label">Under Treatment</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Treated</div>
-        <div class="metric-value text-success">{{ treated_count }}</div>
-      </div>
+    <div class="stat-card {% if filter_status == 'Treated' %}active{% endif %}">
+        <div class="stat-value text-success">{{ treated_count }}</div>
+        <div class="stat-label">Treated</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">High Risk Patients</div>
-        <div class="metric-value text-danger">{{ high_risk_count }}</div>
-      </div>
+    <div class="stat-card {% if filter_risk == 'high' %}active{% endif %}">
+        <div class="stat-value text-danger">{{ high_risk_count }}</div>
+        <div class="stat-label">High Risk</div>
     </div>
-  </div>
 </div>
 
 <!-- Filters -->
-<div class="card shadow-sm border-0 mb-3">
-  <div class="card-body">
-    <form method="get" class="row g-2 align-items-center">
-      <div class="col-auto">
-        <label class="form-label mb-0">Filter by Status:</label>
-      </div>
-      <div class="col-auto">
-        <select name="status" class="form-select form-select-sm">
-          <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Statuses</option>
-          <option value="Pending Review" {% if filter_status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
-          <option value="Under Treatment" {% if filter_status == 'Under Treatment' %}selected{% endif %}>Under Treatment</option>
-          <option value="Treated" {% if filter_status == 'Treated' %}selected{% endif %}>Treated</option>
-          <option value="Follow-up Required" {% if filter_status == 'Follow-up Required' %}selected{% endif %}>Follow-up Required</option>
-        </select>
-      </div>
-      <div class="col-auto">
-        <label class="form-label mb-0">Risk Level:</label>
-      </div>
-      <div class="col-auto">
-        <select name="risk" class="form-select form-select-sm">
-          <option value="all" {% if filter_risk == 'all' %}selected{% endif %}>All Risk Levels</option>
-          <option value="high" {% if filter_risk == 'high' %}selected{% endif %}>High Risk</option>
-          <option value="moderate" {% if filter_risk == 'moderate' %}selected{% endif %}>Moderate Risk</option>
-          <option value="low" {% if filter_risk == 'low' %}selected{% endif %}>Low Risk</option>
-        </select>
-      </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
-      </div>
-    </form>
-  </div>
+<div class="filter-bar">
+    <a href="/doctor/dashboard" class="filter-btn {% if filter_status == 'all' and filter_risk == 'all' %}active{% endif %}">All</a>
+    <a href="/doctor/dashboard?status=Pending Review" class="filter-btn {% if filter_status == 'Pending Review' %}active{% endif %}">Pending</a>
+    <a href="/doctor/dashboard?status=Under Treatment" class="filter-btn {% if filter_status == 'Under Treatment' %}active{% endif %}">In Treatment</a>
+    <a href="/doctor/dashboard?status=Treated" class="filter-btn {% if filter_status == 'Treated' %}active{% endif %}">Treated</a>
+    <span style="border-left: 1px solid #e2e8f0; margin: 0 0.5rem;"></span>
+    <a href="/doctor/dashboard?risk=high" class="filter-btn {% if filter_risk == 'high' %}active{% endif %}">High Risk</a>
+    <a href="/doctor/dashboard?risk=moderate" class="filter-btn {% if filter_risk == 'moderate' %}active{% endif %}">Moderate</a>
+    <a href="/doctor/dashboard?risk=low" class="filter-btn {% if filter_risk == 'low' %}active{% endif %}">Low Risk</a>
 </div>
 
-<!-- Patient Visits Table -->
-<div class="card shadow-sm border-0">
-  <div class="card-header bg-white d-flex justify-content-between align-items-center">
-    <h2 class="h6 mb-0 text-muted text-uppercase">Patient Health Assessments</h2>
-    <span class="badge bg-primary">{{ all_visits|length }} Records</span>
-  </div>
-  <div class="card-body">
-    {% if all_visits %}
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead>
-            <tr class="text-muted small">
-              <th>Patient</th>
-              <th>Disease Type</th>
-              <th>Risk Level</th>
-              <th>Risk Score</th>
-              <th>Status</th>
-              <th>Recorded At</th>
-              <th>Actions</th>
+<!-- Appointments Section -->
+{% if appointments %}
+<div class="dashboard-header" style="margin-top: 2rem;">
+    <h3>📅 Appointments</h3>
+</div>
+<div class="patient-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Hospital</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
-          </thead>
-          <tbody>
-            {% for v in all_visits %}
-              <tr class="{% if v.prediction == 'High Risk' %}table-danger{% elif v.prediction == 'Moderate Risk' %}table-warning{% endif %}">
+        </thead>
+        <tbody>
+            {% for apt in appointments %}
+            <tr>
+                <td><strong>{{ apt.patient.full_name }}</strong></td>
+                <td>{{ apt.hospital.name }}</td>
+                <td>{{ apt.date }}</td>
+                <td>{{ apt.time or 'N/A' }}</td>
                 <td>
-                  <strong>{{ v.patient.full_name if v.patient else "Unknown" }}</strong>
-                  <br><small class="text-muted">Age {{ v.age }}, {{ v.patient.gender if v.patient else "" }}</small>
+                    <span class="risk-badge {% if apt.status == 'Arrived' %}risk-low{% elif apt.status == 'Booked' %}risk-moderate{% else %}risk-high{% endif %}">
+                        {{ apt.status }}
+                    </span>
                 </td>
                 <td>
-                  <span class="badge bg-secondary">{{ v.disease_type or "General" }}</span>
+                    {% if apt.status == 'Arrived' %}
+                    <a href="/nurse/record-vitals?appointment_id={{ apt.id }}" class="btn-view">Record Vitals</a>
+                    {% else %}
+                    <span class="text-muted">Waiting</span>
+                    {% endif %}
                 </td>
-                <td>
-                  <span class="badge bg-{% if v.prediction == 'High Risk' %}danger{% elif v.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %}">
-                    {{ v.prediction }}
-                  </span>
-                </td>
-                <td>
-                  <div class="progress" style="width: 60px; height: 20px;">
-                    <div class="progress-bar bg-{% if v.risk_score >= 60 %}danger{% elif v.risk_score >= 35 %}warning{% else %}success{% endif %}" 
-                         role="progressbar" style="width: {{ v.risk_score }}%">
-                      {{ v.risk_score }}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge bg-{% if v.status == 'Pending Review' %}warning{% elif v.status == 'Under Treatment' %}info{% elif v.status == 'Treated' %}success{% else %}secondary{% endif %}">
-                    {{ v.status }}
-                  </span>
-                </td>
-                <td>{{ v.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td>
-                  <a href="{{ url_for('main.doctor_view_visit', visit_id=v.id) }}" class="btn btn-sm btn-outline-primary">
-                    View Details
-                  </a>
-                </td>
-              </tr>
+            </tr>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="text-muted mb-0">No patient assessments found matching the selected filters.</p>
-    {% endif %}
-  </div>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Patient List -->
+<div class="patient-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Age</th>
+                <th>Disease Type</th>
+                <th>Risk Score</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visit in all_visits %}
+            <tr>
+                <td>
+                    <strong>{{ visit.patient.full_name }}</strong>
+                </td>
+                <td>{{ visit.patient.age }}</td>
+                <td>{{ visit.disease_type }}</td>
+                <td>
+                    <span class="risk-badge {% if visit.prediction == 'High Risk' %}risk-high{% elif visit.prediction == 'Moderate Risk' %}risk-moderate{% else %}risk-low{% endif %}">
+                        {{ visit.risk_score }} - {{ visit.prediction }}
+                    </span>
+                </td>
+                <td>{{ visit.status }}</td>
+                <td>{{ visit.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="/doctor/visit/{{ visit.id }}" class="btn-view">View</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No patients found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
 

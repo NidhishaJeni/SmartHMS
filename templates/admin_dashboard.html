@@ -1,120 +1,200 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Admin Dashboard - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .hospital-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .hospital-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+    }
+    
+    .hospital-info {
+        flex: 1;
+    }
+    
+    .hospital-info h4 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hospital-info p {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    .alert-item {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12">
-    <h1 class="h4 mb-1 text-primary">Admin Dashboard</h1>
-    <p class="text-muted mb-0">Monitor hospitals, capacity, and system-wide alerts.</p>
-  </div>
+<div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p class="text-muted">Manage hospitals and system overview</p>
 </div>
 
-<div class="row g-3 mb-3">
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Total Patients</div>
-        <div class="metric-value text-primary">{{ total_patients }}</div>
-      </div>
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_hospitals }}</div>
+        <div class="stat-label">Hospitals</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Hospitals</div>
-        <div class="metric-value text-primary">{{ total_hospitals }}</div>
-      </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_patients }}</div>
+        <div class="stat-label">Patients</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">Appointments</div>
-        <div class="metric-value text-primary">{{ total_appointments }}</div>
-      </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_appointments }}</div>
+        <div class="stat-label">Appointments</div>
     </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card metric-card shadow-sm border-0">
-      <div class="card-body text-center">
-        <div class="metric-label">High-Risk Alerts</div>
-        <div class="metric-value text-danger">{{ high_risk_alerts|length }}</div>
-      </div>
-    </div>
-  </div>
 </div>
 
-<div class="row g-3">
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h6 mb-0 text-muted text-uppercase">Hospital Capacity</h2>
-        <a href="{{ url_for('main.hospitals_view') }}" class="btn btn-link btn-sm">Manage</a>
-      </div>
-      <div class="card-body">
-        {% if hospitals %}
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr class="text-muted small">
-                  <th>Hospital</th>
-                  <th class="text-center">Total</th>
-                  <th class="text-center">Available</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for h in hospitals %}
-                  <tr>
-                    <td>{{ h.name }}</td>
-                    <td class="text-center">{{ h.total_beds }}</td>
-                    <td class="text-center">
-                      <span class="badge bg-{% if h.available_beds == 0 %}danger{% elif h.available_beds < (h.total_beds * 0.2) %}warning{% else %}success{% endif %}">
-                        {{ h.available_beds }}
-                      </span>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">No hospitals configured yet.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h6 mb-0 text-muted text-uppercase">Recent High-Risk Alerts</h2>
-        <span class="badge bg-outline-danger text-danger border border-danger small">Doctor Notified</span>
-      </div>
-      <div class="card-body">
-        {% if high_risk_alerts %}
-          <ul class="list-group list-group-flush">
-            {% for a in high_risk_alerts %}
-              <li class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <div class="fw-semibold">
-                      {{ a.message }}
-                      <span class="badge bg-danger ms-1">High Risk</span>
-                    </div>
-                    <small class="text-muted">
-                      Patient: {{ a.patient.full_name if a.patient else "Unknown" }} &middot;
-                      {{ a.timestamp.strftime('%Y-%m-%d %H:%M') }}
-                    </small>
-                  </div>
+<div class="row g-4">
+    <!-- Hospitals Section -->
+    <div class="col-lg-8">
+        <div class="section-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="section-title mb-0">Hospitals</h2>
+                <div>
+                    <a href="/admin/hospital-requests" class="btn btn-outline" style="margin-right: 0.5rem;">View Requests</a>
+                    <button class="btn btn-primary" onclick="document.getElementById('hospitalForm').style.display = document.getElementById('hospitalForm').style.display === 'none' ? 'block' : 'none'">
+                        + Add Hospital
+                    </button>
                 </div>
-              </li>
+            </div>
+            
+            <!-- Add Hospital Form -->
+            <form id="hospitalForm" method="post" action="/admin/hospital" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.75rem;">
+                <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" name="name" class="form-input" placeholder="Hospital Name" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" name="total_beds" class="form-input" placeholder="Total Beds" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" name="available_beds" class="form-input" placeholder="Available Beds" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
+                    </div>
+                </div>
+            </form>
+            
+            {% for h in hospitals %}
+            <div class="hospital-card">
+                <div class="hospital-icon">🏥</div>
+                <div class="hospital-info">
+                    <h4>{{ h.name }}</h4>
+                    <p>{{ h.address or 'Address not specified' }} | {{ h.available_beds }}/{{ h.total_beds }} beds available</p>
+                </div>
+                <span class="badge bg-{% if h.is_active %}success{% else %}danger{% endif %}">
+                    {% if h.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+                {% if user.role == 'admin' %}
+                <form method="POST" action="/admin/hospital/{{ h.id }}/toggle" style="display:inline;">
+                    <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+                    <button type="submit" class="btn btn-outline" style="margin-left: 0.5rem;">Toggle</button>
+                </form>
+                {% endif %}
+            </div>
             {% endfor %}
-          </ul>
-        {% else %}
-          <p class="text-muted mb-0">No alerts yet.</p>
-        {% endif %}
-      </div>
+        </div>
     </div>
-  </div>
+    
+    <!-- Alerts Section -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <h2 class="section-title">Recent Alerts</h2>
+            {% if high_risk_alerts %}
+                {% for alert in high_risk_alerts[:10] %}
+                <div class="alert-item">
+                    <div class="small">{{ alert.message }}</div>
+                    <div class="text-muted small">{{ alert.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No recent alerts</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
 

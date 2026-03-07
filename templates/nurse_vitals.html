@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Record Vitals - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    }
+    
+    .patient-header {
+        background: #f8fafc;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.375rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <h1 style="font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 1.5rem;">Record Patient Vitals</h1>
+        
+        {% if patient %}
+        <div class="patient-header">
+            <h3>{{ patient.full_name }}</h3>
+            <p class="text-muted">Age: {{ patient.age }} | Gender: {{ patient.gender }}</p>
+        </div>
+        {% else %}
+        <div class="alert" style="background: #fffbeb; border-left: 3px solid #f59e0b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <p class="mb-0">Please enter a valid patient ID or use QR scan.</p>
+        </div>
+        {% endif %}
+        
+        <form method="post" action="/nurse/record-vitals">
+            {% if patient %}
+            <input type="hidden" name="patient_id" value="{{ patient.id }}">
+            {% else %}
+            <div class="form-group">
+                <label for="patient_id">Patient ID</label>
+                <input type="number" id="patient_id" name="patient_id" class="form-input" required>
+            </div>
+            {% endif %}
+            
+            {% if appointment %}
+            <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+            {% endif %}
+            
+            <!-- Blood Pressure -->
+            <div class="section-title">Blood Pressure</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Systolic (mmHg)</label>
+                        <input type="number" step="0.1" name="blood_pressure_systolic" class="form-input" value="120">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Diastolic (mmHg)</label>
+                        <input type="number" step="0.1" name="blood_pressure_diastolic" class="form-input" value="80">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Heart & Respiration -->
+            <div class="section-title">Heart & Respiration</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Heart Rate (bpm)</label>
+                        <input type="number" step="0.1" name="heart_rate" class="form-input" value="72">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Respiratory Rate</label>
+                        <input type="number" step="0.1" name="respiratory_rate" class="form-input" value="16">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Temperature (°F)</label>
+                        <input type="number" step="0.1" name="temperature" class="form-input" value="98.6">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oxygen & Weight -->
+            <div class="section-title">Oxygen & Body Metrics</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>SpO2 (%)</label>
+                        <input type="number" step="0.1" name="oxygen_saturation" class="form-input" value="98">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" step="0.1" name="weight" class="form-input" value="0">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Height (cm)</label>
+                        <input type="number" step="0.1" name="height" class="form-input" value="0">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Glucose & Cholesterol -->
+            <div class="section-title">Blood Tests</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Glucose (mg/dL)</label>
+                        <input type="number" step="0.1" name="glucose" class="form-input" value="0">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Cholesterol (mg/dL)</label>
+                        <input type="number" step="0.1" name="cholesterol" class="form-input" value="0">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit mt-4">Record Vitals</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

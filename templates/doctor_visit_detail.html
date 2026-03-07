@@ -1,270 +1,299 @@
 {% extends "base.html" %}
-{% block title %}Patient Visit Details{% endblock %}
+{% block title %}Patient Visit Details - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .patient-info {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .patient-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .vitals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .vital-item {
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 0.5rem;
+    }
+    
+    .vital-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+    
+    .vital-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+    
+    .risk-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-weight: 600;
+    }
+    
+    .risk-high {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    .risk-moderate {
+        background: #fffbeb;
+        color: #d97706;
+    }
+    
+    .risk-low {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+    
+    .test-tag {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        margin: 0.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        background: #f8fafc;
+    }
+    
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-secondary {
+        padding: 0.75rem 1.5rem;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        color: #475569;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{{ url_for('main.doctor_dashboard') }}">Doctor Dashboard</a></li>
-        <li class="breadcrumb-item active">Visit #{{ visit.id }}</li>
-      </ol>
-    </nav>
-  </div>
+<div class="detail-header">
+    <div class="patient-info">
+        <div class="patient-avatar">👤</div>
+        <div>
+            <h1 style="font-size: 1.5rem; margin-bottom: 0.25rem;">{{ patient.full_name }}</h1>
+            <p class="text-muted mb-2">Age: {{ patient.age }} | Gender: {{ patient.gender }}</p>
+            <span class="risk-badge {% if visit.prediction == 'High Risk' %}risk-high{% elif visit.prediction == 'Moderate Risk' %}risk-moderate{% else %}risk-low{% endif %}">
+                {{ visit.prediction }} ({{ visit.risk_score }}%)
+            </span>
+        </div>
+    </div>
 </div>
 
-<div class="row">
-  <!-- Patient Info and Status -->
-  <div class="col-lg-4 mb-3">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white">
-        <h5 class="h6 mb-0 text-muted text-uppercase">Patient Information</h5>
-      </div>
-      <div class="card-body">
-        <div class="text-center mb-3">
-          <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-            <span class="h4 mb-0">{{ patient.full_name[0] | upper }}</span>
-          </div>
-          <h5 class="mt-2 mb-0">{{ patient.full_name }}</h5>
-          <small class="text-muted">Age {{ patient.age }}, {{ patient.gender }}</small>
-        </div>
-        
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item d-flex justify-content-between">
-            <span class="text-muted">Phone</span>
-            <span>{{ patient.phone or "N/A" }}</span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span class="text-muted">Address</span>
-            <span>{{ patient.address or "N/A" }}</span>
-          </li>
-          <li class="list-group-item d-flex justify-content-between">
-            <span class="text-muted">Visit Date</span>
-            <span>{{ visit.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-          </li>
-        </ul>
-        
-        <div class="mt-3 text-center">
-          <span class="badge bg-{% if visit.prediction == 'High Risk' %}danger{% elif visit.prediction == 'Moderate Risk' %}warning{% else %}success{% endif %} fs-6">
-            {{ visit.prediction }}
-          </span>
-          <div class="mt-2">
-            <span class="text-muted">Risk Score:</span>
-            <strong>{{ visit.risk_score }}/100</strong>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Detected Conditions -->
-  <div class="col-lg-8 mb-3">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="h6 mb-0 text-muted text-uppercase">Detected Conditions</h5>
-        <span class="badge bg-{{ 'danger' if visit.prediction == 'High Risk' else 'warning' if visit.prediction == 'Moderate Risk' else 'success' }}">
-          {{ visit.disease_type }}
-        </span>
-      </div>
-      <div class="card-body">
-        {% if detected_conditions %}
-          <div class="row">
+<div class="row g-4">
+    <!-- Vitals & Assessment -->
+    <div class="col-lg-8">
+        <div class="section-card">
+            <h2 class="section-title">Health Assessment Results</h2>
+            
+            <div class="mb-3">
+                <strong>Primary Disease:</strong> {{ visit.disease_type }}
+            </div>
+            
+            <h4>Key Vitals</h4>
+            <div class="vitals-grid">
+                <div class="vital-item">
+                    <div class="vital-label">Glucose</div>
+                    <div class="vital-value">{{ visit.glucose }} mg/dL</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Blood Pressure</div>
+                    <div class="vital-value">{{ visit.blood_pressure }} mmHg</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">BMI</div>
+                    <div class="vital-value">{{ visit.bmi }}</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Heart Rate</div>
+                    <div class="vital-value">{{ visit.heart_rate }} bpm</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Cholesterol</div>
+                    <div class="vital-value">{{ visit.cholesterol }} mg/dL</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">SpO2</div>
+                    <div class="vital-value">{{ visit.oxygen_saturation }}%</div>
+                </div>
+            </div>
+            
+            {% if detected_conditions %}
+            <h4 class="mt-4">Detected Conditions</h4>
             {% for condition in detected_conditions %}
-              <div class="col-md-6 mb-2">
-                <div class="card border-{% if condition.risk_level == 'High Risk' %}danger{% elif condition.risk_level == 'Moderate Risk' %}warning{% else %}success{% endif %}">
-                  <div class="card-body p-2">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                      <strong>{{ condition.disease }}</strong>
-                      <span class="badge bg-{% if condition.risk_level == 'High Risk' %}danger{% elif condition.risk_level == 'Moderate Risk' %}warning{% else %}success{% endif %}">
-                        {{ condition.score }}%
-                      </span>
-                    </div>
-                    <small class="text-muted">{{ condition.key_indicators | join(', ') }}</small>
-                  </div>
-                </div>
-              </div>
+            <div class="mb-2">
+                <strong>{{ condition.disease }}</strong> - {{ condition.risk_level }}
+            </div>
             {% endfor %}
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">No specific conditions detected.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <!-- Vital Signs -->
-  <div class="col-lg-6 mb-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white">
-        <h5 class="h6 mb-0 text-muted text-uppercase">Vital Signs & Lab Values</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-6">
-            <h6 class="small text-muted">Basic Vitals</h6>
-            <table class="table table-sm">
-              <tr>
-                <td>Blood Pressure</td>
-                <td class="{% if visit.blood_pressure >= 140 %}text-danger{% elif visit.blood_pressure >= 130 %}text-warning{% endif %}">
-                  <strong>{{ visit.blood_pressure }}</strong> mmHg
-                </td>
-              </tr>
-              <tr>
-                <td>Heart Rate</td>
-                <td><strong>{{ visit.heart_rate }}</strong> bpm</td>
-              </tr>
-              <tr>
-                <td>Respiratory Rate</td>
-                <td><strong>{{ visit.respiratory_rate }}</strong> /min</td>
-              </tr>
-              <tr>
-                <td>SpO2</td>
-                <td class="{% if visit.oxygen_saturation <= 92 %}text-danger{% elif visit.oxygen_saturation <= 95 %}text-warning{% endif %}">
-                  <strong>{{ visit.oxygen_saturation }}</strong>%
-                </td>
-              </tr>
-              <tr>
-                <td>BMI</td>
-                <td class="{% if visit.bmi >= 30 %}text-danger{% elif visit.bmi >= 25 %}text-warning{% endif %}">
-                  <strong>{{ visit.bmi }}</strong>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-6">
-            <h6 class="small text-muted">Blood Tests</h6>
-            <table class="table table-sm">
-              <tr>
-                <td>Glucose</td>
-                <td class="{% if visit.glucose >= 126 %}text-danger{% elif visit.glucose >= 100 %}text-warning{% endif %}">
-                  <strong>{{ visit.glucose }}</strong> mg/dL
-                </td>
-              </tr>
-              <tr>
-                <td>Cholesterol</td>
-                <td class="{% if visit.cholesterol >= 240 %}text-danger{% elif visit.cholesterol >= 200 %}text-warning{% endif %}">
-                  <strong>{{ visit.cholesterol }}</strong> mg/dL
-                </td>
-              </tr>
-              <tr>
-                <td>HDL/LDL</td>
-                <td><strong>{{ visit.hdl }}/{{ visit.ldl }}</strong></td>
-              </tr>
-              <tr>
-                <td>Hemoglobin</td>
-                <td class="{% if visit.hemoglobin <= 10 and visit.hemoglobin > 0 %}text-danger{% endif %}">
-                  <strong>{{ visit.hemoglobin }}</strong> g/dL
-                </td>
-              </tr>
-              <tr>
-                <td>Creatinine</td>
-                <td class="{% if visit.creatinine >= 1.5 %}text-danger{% endif %}">
-                  <strong>{{ visit.creatinine }}</strong> mg/dL
-                </td>
-              </tr>
-            </table>
-          </div>
+            {% endif %}
+            
+            {% if suggested_tests %}
+            <h4 class="mt-4">Suggested Tests</h4>
+            <div>
+                {% for test in suggested_tests %}
+                <span class="test-tag">{{ test }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
         
-        {% if visit.chest_pain or visit.shortness_of_breath or visit.fatigue or visit.swelling or visit.smoking %}
-        <hr>
-        <h6 class="small text-muted">Reported Symptoms</h6>
-        <div class="d-flex flex-wrap gap-2">
-          {% if visit.chest_pain %}<span class="badge bg-danger">Chest Pain</span>{% endif %}
-          {% if visit.shortness_of_breath %}<span class="badge bg-warning text-dark">Shortness of Breath</span>{% endif %}
-          {% if visit.fatigue %}<span class="badge bg-warning text-dark">Fatigue</span>{% endif %}
-          {% if visit.swelling %}<span class="badge bg-warning text-dark">Swelling</span>{% endif %}
-          {% if visit.smoking %}<span class="badge bg-secondary">Smoker</span>{% endif %}
-        </div>
-        {% endif %}
-        
-        {% if visit.family_history %}
-        <div class="mt-2">
-          <span class="text-muted small">Family History:</span>
-          <span>{{ visit.family_history }}</span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  
-  <!-- Suggested Tests -->
-  <div class="col-lg-6 mb-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white">
-        <h5 class="h6 mb-0 text-muted text-uppercase">Recommended Diagnostic Tests</h5>
-      </div>
-      <div class="card-body">
-        {% if suggested_tests %}
-          <div class="row">
-            {% for test in suggested_tests %}
-              <div class="col-6 mb-2">
-                <div class="d-flex align-items-center">
-                  <span class="badge bg-light text-dark border me-2">{{ loop.index }}</span>
-                  <span class="small">{{ test }}</span>
+        <!-- Treatment Form -->
+        <div class="section-card">
+            <h2 class="section-title">Update Treatment</h2>
+            <form method="post" action="/doctor/visit/{{ visit.id }}">
+                <input type="hidden" name="action" value="update_status">
+                
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="Pending Review" {% if visit.status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+                        <option value="Under Treatment" {% if visit.status == 'Under Treatment' %}selected{% endif %}>Under Treatment</option>
+                        <option value="Treated" {% if visit.status == 'Treated' %}selected{% endif %}>Treated</option>
+                        <option value="Follow-up Required" {% if visit.status == 'Follow-up Required' %}selected{% endif %}>Follow-up Required</option>
+                    </select>
                 </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">No specific tests recommended.</p>
-        {% endif %}
-      </div>
+                
+                <div class="form-group">
+                    <label for="diagnosis">Diagnosis</label>
+                    <textarea name="diagnosis" id="diagnosis" class="form-textarea">{{ visit.diagnosis }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="treatment_plan">Treatment Plan</label>
+                    <textarea name="treatment_plan" id="treatment_plan" class="form-textarea">{{ visit.treatment_plan }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="doctor_notes">Doctor Notes</label>
+                    <textarea name="doctor_notes" id="doctor_notes" class="form-textarea">{{ visit.doctor_notes }}</textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">Update Visit</button>
+            </form>
+        </div>
     </div>
-  </div>
-</div>
-
-<!-- Treatment Update Form -->
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="h6 mb-0 text-muted text-uppercase">Update Treatment Status</h5>
-        <span class="badge bg-{% if visit.status == 'Pending Review' %}warning{% elif visit.status == 'Under Treatment' %}info{% elif visit.status == 'Treated' %}success{% else %}secondary{% endif %}">
-          Current: {{ visit.status }}
-        </span>
-      </div>
-      <div class="card-body">
-        <form method="post">
-          <input type="hidden" name="action" value="update_status">
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">Update Status</label>
-              <select name="status" class="form-select">
-                <option value="Pending Review" {% if visit.status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
-                <option value="Under Treatment" {% if visit.status == 'Under Treatment' %}selected{% endif %}>Under Treatment</option>
-                <option value="Treated" {% if visit.status == 'Treated' %}selected{% endif %}>Treated</option>
-                <option value="Follow-up Required" {% if visit.status == 'Follow-up Required' %}selected{% endif %}>Follow-up Required</option>
-              </select>
-            </div>
-            <div class="col-md-9">
-              <label class="form-label">Diagnosis</label>
-              <input type="text" name="diagnosis" class="form-control" value="{{ visit.diagnosis or '' }}" placeholder="Enter your diagnosis">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Treatment Plan</label>
-              <textarea name="treatment_plan" class="form-control" rows="3" placeholder="Describe the treatment plan">{{ visit.treatment_plan or '' }}</textarea>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Doctor Notes</label>
-              <textarea name="doctor_notes" class="form-control" rows="3" placeholder="Additional notes for the patient">{{ visit.doctor_notes or '' }}</textarea>
-            </div>
-            <div class="col-12">
-              <button type="submit" class="btn btn-primary">Update & Notify Patient</button>
-              <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-outline-secondary ms-2">Back to Dashboard</a>
-            </div>
-          </div>
-        </form>
+    
+    <!-- Lab Tests & Treatments -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <h2 class="section-title">Lab Tests</h2>
+            {% if lab_tests %}
+                {% for test in lab_tests %}
+                <div class="mb-2 pb-2 border-bottom">
+                    <strong>{{ test.test_name }}</strong>
+                    <br>
+                    <small class="text-muted">{{ test.status }} | {{ test.created_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No lab tests requested</p>
+            {% endif %}
+            
+            <form method="post" action="/doctor/lab-request" class="mt-3">
+                <input type="hidden" name="patient_id" value="{{ patient.id }}">
+                <div class="form-group">
+                    <input type="text" name="test_name" class="form-input" placeholder="Test Name" required>
+                </div>
+                <button type="submit" class="btn-secondary w-100">Request Lab Test</button>
+            </form>
+        </div>
         
-        {% if visit.reviewed_at %}
-        <hr>
-        <small class="text-muted">
-          Last updated: {{ visit.reviewed_at.strftime('%Y-%m-%d %H:%M') }}
-        </small>
-        {% endif %}
-      </div>
+        <div class="section-card">
+            <h2 class="section-title">Treatment History</h2>
+            {% if treatments %}
+                {% for t in treatments %}
+                <div class="mb-2 pb-2 border-bottom">
+                    <strong>{{ t.diagnosis }}</strong>
+                    <br>
+                    <small class="text-muted">{{ t.status }} | {{ t.created_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No treatments yet</p>
+            {% endif %}
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
+

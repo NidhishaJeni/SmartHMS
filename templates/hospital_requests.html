@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Hospital Requests - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { margin-bottom: 2rem; }
+    .section-card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08); margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #0f172a; }
+    .request-card { display: flex; align-items: center; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; margin-bottom: 0.75rem; }
+    .request-info { flex: 1; }
+    .request-info h4 { margin: 0 0 0.25rem 0; font-size: 1rem; color: #0f172a; }
+    .request-info p { margin: 0; font-size: 0.875rem; color: #64748b; }
+    .request-actions { display: flex; gap: 0.5rem; }
+    .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; text-decoration: none; font-size: 0.875rem; }
+    .btn-approve { background: #22c55e; color: white; }
+    .btn-reject { background: #ef4444; color: white; }
+    .badge { padding: 0.25rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
+    .badge-pending { background: #fef3c7; color: #d97706; }
+    .badge-approved { background: #dcfce7; color: #16a34a; }
+    .badge-rejected { background: #fee2e2; color: #dc2626; }
+    .empty-state { text-align: center; padding: 2rem; color: #64748b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Hospital Registration Requests</h1>
+    <p class="text-muted">Review and approve hospital registration requests</p>
+</div>
+
+{% if pending_requests %}
+<div class="section-card">
+    <h2 class="section-title">Pending Requests ({{ pending_requests|length }})</h2>
+    {% for req in pending_requests %}
+    <div class="request-card">
+        <div class="request-info">
+            <h4>{{ req.hospital_name }}</h4>
+            <p>{{ req.address }} | {{ req.phone }} | {{ req.email }}</p>
+            <p>Contact: {{ req.contact_person }} | Beds: {{ req.total_beds }}</p>
+            <p class="text-muted">Requested: {{ req.requested_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+        <div class="request-actions">
+            <form method="POST" action="/admin/hospital-request/{{ req.id }}/approve" style="display:inline;">
+                <button type="submit" class="btn btn-approve">Approve</button>
+            </form>
+            <form method="POST" action="/admin/hospital-request/{{ req.id }}/reject" style="display:inline;">
+                <button type="submit" class="btn btn-reject">Reject</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="section-card">
+    <div class="empty-state">No pending requests</div>
+</div>
+{% endif %}
+
+{% if processed_requests %}
+<div class="section-card">
+    <h2 class="section-title">Processed Requests</h2>
+    {% for req in processed_requests %}
+    <div class="request-card">
+        <div class="request-info">
+            <h4>{{ req.hospital_name }}</h4>
+            <p>{{ req.address }} | {{ req.phone }}</p>
+            <p>Processed: {{ req.processed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            {% if req.admin_notes %}
+            <p>Notes: {{ req.admin_notes }}</p>
+            {% endif %}
+        </div>
+        <span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+

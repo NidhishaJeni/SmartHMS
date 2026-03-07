@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Nurse Dashboard - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    .patient-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .patient-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .patient-info {
+        flex: 1;
+    }
+    
+    .patient-info h4 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .patient-info p {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-outline {
+        border: 2px solid #e2e8f0;
+        color: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Nurse Dashboard</h1>
+    <p class="text-muted">Record patient vitals, health assessments, and manage arrivals</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ appointments|length }}</div>
+        <div class="stat-label">Arrived Patients</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-card" style="background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08); margin-bottom: 1.5rem;">
+    <h2 class="section-title" style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Quick Actions</h2>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/nurse/record-vitals" class="btn btn-primary">+ Record Vitals</a>
+        <a href="/nurse/visit?token={{ request.query_params.get('token', '') }}" class="btn btn-outline">🧠 Health Assessment</a>
+    </div>
+</div>
+
+<!-- Patient List -->
+<div class="section-card" style="background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);">
+    <h2 class="section-title" style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Arrived Patients</h2>
+    
+    {% if appointments %}
+        {% for apt in appointments %}
+        <div class="patient-card">
+            <div class="patient-icon">👤</div>
+            <div class="patient-info">
+                <h4>{{ apt.patient.full_name }}</h4>
+                <p>{{ apt.date }}{% if apt.time %} at {{ apt.time }}{% endif %}</p>
+            </div>
+            <a href="/nurse/record-vitals?appointment_id={{ apt.id }}" class="btn btn-primary">Record Vitals</a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No patients have arrived yet.</p>
+    {% endif %}
+</div>
+
+<!-- Manual Entry -->
+<div class="section-card" style="background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08); margin-top: 1.5rem;">
+    <h2 class="section-title" style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Manual Patient Entry</h2>
+    <form method="get" action="/nurse/record-vitals" class="d-flex gap-2">
+        <input type="hidden" name="token" value="{{ request.query_params.get('token', '') }}">
+        <input type="number" name="patient_id" class="form-input" placeholder="Enter Patient ID" style="flex: 1; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 0.5rem;">
+        <button type="submit" class="btn btn-outline">Find Patient</button>
+    </form>
+</div>
+{% endblock %}
+

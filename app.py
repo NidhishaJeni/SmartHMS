@@ -1,125 +1,218 @@
-from flask import Flask
-from sqlalchemy import text
+"""
+SmartHMS - AI-Powered Multi-Hospital Healthcare Coordination Platform
+Main application entry point using FastAPI.
+"""
 
-from config import get_config
-from extensions import db, login_manager
-from models import User, Patient, Hospital, Appointment, Visit, Alert
-from routes import auth_bp, main_bp, automation_bp
+import os
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 
+# Import database and models
+from app.database import engine, Base, SessionLocal, init_db
+from app.models import User, Hospital, Patient, Doctor, Nurse
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(get_config())
+# Import routers
+from app.routers import auth, main
 
-    db.init_app(app)
-    login_manager.init_app(app)
+# Create FastAPI app
+app = FastAPI(
+    title="SmartHMS",
+    description="AI-Powered Multi-Hospital Healthcare Coordination Platform",
+    version="2.0.0"
+)
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(automation_bp)
+# Mount static files
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-    with app.app_context():
-        db.create_all()
-        migrate_visit_schema()
-        seed_initial_data()
-
-    return app
-
-
-def migrate_visit_schema():
-    """
-    Lightweight runtime migration for SQLite demo environments.
-    Adds newly introduced visit workflow columns if missing.
-    """
-    engine_name = db.engine.dialect.name if db.engine else ""
-    if engine_name != "sqlite":
-        return
-
-    expected_columns = {
-        # Extended vitals for comprehensive disease detection
-        "heart_rate": "FLOAT DEFAULT 0",
-        "respiratory_rate": "FLOAT DEFAULT 0",
-        "oxygen_saturation": "FLOAT DEFAULT 0",
-        "cholesterol": "FLOAT DEFAULT 0",
-        "hdl": "FLOAT DEFAULT 0",
-        "ldl": "FLOAT DEFAULT 0",
-        "triglycerides": "FLOAT DEFAULT 0",
-        "creatinine": "FLOAT DEFAULT 0",
-        "urea": "FLOAT DEFAULT 0",
-        "alt": "FLOAT DEFAULT 0",
-        "ast": "FLOAT DEFAULT 0",
-        "hemoglobin": "FLOAT DEFAULT 0",
-        "chest_pain": "BOOLEAN DEFAULT 0",
-        "shortness_of_breath": "BOOLEAN DEFAULT 0",
-        "fatigue": "BOOLEAN DEFAULT 0",
-        "swelling": "BOOLEAN DEFAULT 0",
-        "smoking": "BOOLEAN DEFAULT 0",
-        "family_history": "VARCHAR(255) DEFAULT ''",
-        # Prediction results - supports multiple diseases
-        "disease_type": "VARCHAR(64) DEFAULT 'General'",
-        "risk_score": "INTEGER DEFAULT 0",
-        "predicted_conditions": "TEXT DEFAULT ''",
-        "suggested_tests": "TEXT DEFAULT ''",
-        # Treatment tracking
-        "status": "VARCHAR(32) DEFAULT 'Pending Review'",
-        "doctor_notes": "TEXT DEFAULT ''",
-        "diagnosis": "TEXT DEFAULT ''",
-        "treatment_plan": "TEXT DEFAULT ''",
-        "reviewed_by": "INTEGER",
-        "reviewed_at": "DATETIME",
-    }
-
-    result = db.session.execute(text("PRAGMA table_info(visits)"))
-    existing_columns = {row[1] for row in result.fetchall()}
-
-    for col_name, col_type in expected_columns.items():
-        if col_name not in existing_columns:
-            db.session.execute(text(f"ALTER TABLE visits ADD COLUMN {col_name} {col_type}"))
-    db.session.commit()
+# Setup templates
+templates = Jinja2Templates(directory="templates")
 
 
-def seed_initial_data():
-    """
-    Lightweight seed data for prototype/demo use.
-    Avoids duplicates by checking for existing records.
-    """
-    if not User.query.filter_by(username="admin").first():
-        admin = User(username="admin", role="admin")
-        admin.set_password("admin123")
-        db.session.add(admin)
+# =============================================================================
+# App Startup Event
+# =============================================================================
 
-    if not User.query.filter_by(username="doctor").first():
-        doctor = User(username="doctor", role="doctor")
-        doctor.set_password("doctor123")
-        db.session.add(doctor)
-
-    if not User.query.filter_by(username="patient").first():
-        patient_user = User(username="patient", role="patient")
-        patient_user.set_password("patient123")
-        db.session.add(patient_user)
-        db.session.flush()
-
-        patient_profile = Patient(
-            user_id=patient_user.id,
-            full_name="Demo Patient",
-            age=45,
-            gender="Male",
-            phone="+1-555-0100",
-            address="123 Health Street",
-        )
-        db.session.add(patient_profile)
-
-    if Hospital.query.count() == 0:
-        h1 = Hospital(name="City General Hospital", total_beds=100, available_beds=60)
-        h2 = Hospital(name="Sunrise Medical Center", total_beds=80, available_beds=20)
-        h3 = Hospital(name="Lakeside Clinic", total_beds=40, available_beds=10)
-        db.session.add_all([h1, h2, h3])
-
-    db.session.commit()
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    # Import all models to ensure they're registered
+    from app.models import (
+        User, Hospital, Patient, Appointment, Visit, Alert,
+        Doctor, Nurse, Department, Vitals, LabTest, LabReport, Treatment, Bed
+    )
+    
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    
+    # Seed initial data
+    seed_data()
 
 
-app = create_app()
+def seed_data():
+    """Seed initial data for the application."""
+    db = SessionLocal()
+    try:
+        # Check if users already exist
+        admin_exists = db.query(User).filter(User.username == "admin").first()
+        doctor_exists = db.query(User).filter(User.username == "doctor").first()
+        patient_exists = db.query(User).filter(User.username == "patient").first()
+        
+        # Create admin user
+        if not admin_exists:
+            from app.utils.auth import get_password_hash
+            admin = User(
+                username="admin",
+                password_hash=get_password_hash("admin123"),
+                role="admin",
+                is_active=True
+            )
+            db.add(admin)
+            print("✓ Created admin user (admin/admin123)")
+        
+        # Create doctor user
+        if not doctor_exists:
+            from app.utils.auth import get_password_hash
+            doctor_user = User(
+                username="doctor",
+                password_hash=get_password_hash("doctor123"),
+                role="doctor",
+                is_active=True
+            )
+            db.add(doctor_user)
+            db.flush()
+            
+            # Create doctor profile
+            if not db.query(Doctor).filter(Doctor.user_id == doctor_user.id).first():
+                # First check if there's a hospital
+                hospital = db.query(Hospital).first()
+                if not hospital:
+                    hospital = Hospital(
+                        name="City General Hospital",
+                        address="123 Health Street",
+                        phone="+1-555-0100",
+                        total_beds=100,
+                        available_beds=60
+                    )
+                    db.add(hospital)
+                    db.flush()
+                
+                doctor = Doctor(
+                    user_id=doctor_user.id,
+                    hospital_id=hospital.id,
+                    full_name="Dr. John Smith",
+                    specialization="General Medicine",
+                    license_number="MD-12345"
+                )
+                db.add(doctor)
+            print("✓ Created doctor user (doctor/doctor123)")
+        
+        # Create patient user
+        if not patient_exists:
+            from app.utils.auth import get_password_hash
+            patient_user = User(
+                username="patient",
+                password_hash=get_password_hash("patient123"),
+                role="patient",
+                is_active=True
+            )
+            db.add(patient_user)
+            db.flush()
+            
+            # Create patient profile
+            if not db.query(Patient).filter(Patient.user_id == patient_user.id).first():
+                patient = Patient(
+                    user_id=patient_user.id,
+                    full_name="Demo Patient",
+                    age=45,
+                    gender="Male",
+                    phone="+1-555-0100",
+                    address="123 Health Street"
+                )
+                db.add(patient)
+            print("✓ Created patient user (patient/patient123)")
+        
+        # Create nurse user
+        nurse_exists = db.query(User).filter(User.username == "nurse").first()
+        if not nurse_exists:
+            from app.utils.auth import get_password_hash
+            nurse_user = User(
+                username="nurse",
+                password_hash=get_password_hash("nurse123"),
+                role="nurse",
+                is_active=True
+            )
+            db.add(nurse_user)
+            db.flush()
+            
+            # Create nurse profile
+            hospital = db.query(Hospital).first()
+            if hospital and not db.query(Nurse).filter(Nurse.user_id == nurse_user.id).first():
+                nurse = Nurse(
+                    user_id=nurse_user.id,
+                    hospital_id=hospital.id,
+                    full_name="Nurse Jane Doe",
+                    license_number="RN-12345"
+                )
+                db.add(nurse)
+            print("✓ Created nurse user (nurse/nurse123)")
+        
+        # Create lab tech user
+        lab_exists = db.query(User).filter(User.username == "lab").first()
+        if not lab_exists:
+            from app.utils.auth import get_password_hash
+            lab_user = User(
+                username="lab",
+                password_hash=get_password_hash("lab123"),
+                role="lab_tech",
+                is_active=True
+            )
+            db.add(lab_user)
+            print("✓ Created lab tech user (lab/lab123)")
+        
+        # Create default hospitals if none exist
+        if db.query(Hospital).count() == 0:
+            hospitals = [
+                Hospital(name="City General Hospital", address="100 Main St", phone="+1-555-0101", total_beds=100, available_beds=60),
+                Hospital(name="Sunrise Medical Center", address="200 Oak Ave", phone="+1-555-0102", total_beds=80, available_beds=20),
+                Hospital(name="Lakeside Clinic", address="300 Lake Dr", phone="+1-555-0103", total_beds=40, available_beds=10)
+            ]
+            for h in hospitals:
+                db.add(h)
+            print("✓ Created default hospitals")
+        
+        db.commit()
+        print("✓ Database seeding completed successfully")
+    except Exception as e:
+        print(f"Error seeding data: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+    finally:
+        db.close()
 
+
+# Include routers (main.router handles the root "/" route)
+app.include_router(auth.router)
+app.include_router(main.router)
+
+
+# =============================================================================
+# Main Entry Point
+# =============================================================================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("=" * 60)
+    print("SmartHMS - AI-Powered Healthcare Platform")
+    print("=" * 60)
+    print("Starting server...")
+    print("Access the application at: http://localhost:8000")
+    print("=" * 60)
+    
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+

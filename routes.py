@@ -475,6 +475,12 @@ def index():
 @role_required("patient")
 def patient_dashboard():
     patient = current_user.patient
+    
+    # Check if patient profile exists, if not redirect to create profile
+    if not patient:
+        flash("Please create your patient profile first.", "warning")
+        return redirect(url_for("main.create_profile"))
+    
     visits = Visit.query.filter_by(patient_id=patient.id).order_by(Visit.created_at.desc()).limit(5).all()
     appointments = Appointment.query.filter_by(patient_id=patient.id).order_by(Appointment.id.desc()).limit(5).all()
     return render_template("patient_dashboard.html", patient=patient, visits=visits, appointments=appointments)
@@ -733,6 +739,12 @@ def book_appointment():
 @role_required("patient")
 def appointments_view():
     patient = current_user.patient
+    
+    # Check if patient profile exists, if not redirect to create profile
+    if not patient:
+        flash("Please create your patient profile first.", "warning")
+        return redirect(url_for("main.create_profile"))
+    
     appointments = (
         Appointment.query.filter_by(patient_id=patient.id)
         .order_by(Appointment.id.desc())

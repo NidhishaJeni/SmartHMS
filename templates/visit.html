@@ -1,161 +1,315 @@
 {% extends "base.html" %}
-{% block title %}AI Health Assessment{% endblock %}
+{% block title %}AI Health Assessment - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assessment-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .assessment-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.375rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+    
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+    }
+    
+    .checkbox-item input {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+    
+    .info-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-box h4 {
+        font-size: 1rem;
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-box p {
+        color: #3b82f6;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-12 col-lg-10">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h1 class="h5 mb-2 text-primary">Comprehensive AI Health Assessment</h1>
-        <p class="text-muted small mb-3">
-          Enter your clinical values and symptoms for a comprehensive health risk assessment. Our AI analyzes multiple diseases including Diabetes, Cardiovascular Disease, Hypertension, Respiratory Issues, Kidney Disease, Liver Disease, and Anemia.
-        </p>
-        <form method="post" novalidate>
-          <!-- Basic Vitals Section -->
-          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Basic Vitals</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <label class="form-label">Age</label>
-              <input type="number" name="age" class="form-control" min="0" required>
+<div class="assessment-container">
+    <div class="assessment-card">
+        <h1 style="font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem;">AI Health Risk Assessment</h1>
+        <p style="text-align: center; color: #64748b; margin-bottom: 1.5rem;">Comprehensive health analysis powered by AI</p>
+        
+        <div class="info-box">
+            <h4>🤖 AI-Powered Analysis</h4>
+            <p>This assessment analyzes 40+ health parameters to detect risks for diabetes, cardiovascular disease, hypertension, kidney disease, liver disease, anemia, and respiratory conditions.</p>
+        </div>
+        
+        <form method="post" action="/visit">
+            <!-- Basic Information -->
+            <div class="section-title">Basic Information</div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" name="age" class="form-input" value="{{ patient.age }}" required min="1" max="150">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>BMI</label>
+                        <input type="number" step="0.1" name="bmi" class="form-input" placeholder="kg/m²">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Pregnancies</label>
+                        <input type="number" name="pregnancies" class="form-input" value="0" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Glucose (Fasting)</label>
+                        <input type="number" step="0.1" name="glucose" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">BMI</label>
-              <input type="number" step="0.1" name="bmi" class="form-control" placeholder="kg/m²" required>
+            
+            <!-- Blood Pressure & Heart -->
+            <div class="section-title">Blood Pressure & Heart</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Blood Pressure (Systolic)</label>
+                        <input type="number" step="0.1" name="blood_pressure" class="form-input" placeholder="mmHg">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Heart Rate</label>
+                        <input type="number" step="0.1" name="heart_rate" class="form-input" placeholder="bpm">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Respiratory Rate</label>
+                        <input type="number" step="0.1" name="respiratory_rate" class="form-input" placeholder="breaths/min">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Blood Pressure (Systolic)</label>
-              <input type="number" step="0.1" name="blood_pressure" class="form-control" placeholder="mmHg" required>
+            
+            <!-- Cholesterol Panel -->
+            <div class="section-title">Cholesterol & Lipids</div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Total Cholesterol</label>
+                        <input type="number" step="0.1" name="cholesterol" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>HDL Cholesterol</label>
+                        <input type="number" step="0.1" name="hdl" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>LDL Cholesterol</label>
+                        <input type="number" step="0.1" name="ldl" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Triglycerides</label>
+                        <input type="number" step="0.1" name="triglycerides" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Heart Rate</label>
-              <input type="number" step="0.1" name="heart_rate" class="form-control" placeholder="bpm">
+            
+            <!-- Organ Function -->
+            <div class="section-title">Organ Function Tests</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Creatinine</label>
+                        <input type="number" step="0.01" name="creatinine" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Urea/BUN</label>
+                        <input type="number" step="0.1" name="urea" class="form-input" placeholder="mg/dL">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Hemoglobin</label>
+                        <input type="number" step="0.1" name="hemoglobin" class="form-input" placeholder="g/dL">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Respiratory Rate</label>
-              <input type="number" step="0.1" name="respiratory_rate" class="form-control" placeholder="breaths/min">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>ALT (Liver Enzyme)</label>
+                        <input type="number" step="0.1" name="alt" class="form-input" placeholder="U/L">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>AST (Liver Enzyme)</label>
+                        <input type="number" step="0.1" name="ast" class="form-input" placeholder="U/L">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Oxygen Saturation (SpO2)</label>
-              <input type="number" step="0.1" name="oxygen_saturation" class="form-control" placeholder="%" value="98">
+            
+            <!-- Diabetes Markers -->
+            <div class="section-title">Diabetes Markers</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Insulin</label>
+                        <input type="number" step="0.1" name="insulin" class="form-input" placeholder="μU/mL">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Skin Thickness</label>
+                        <input type="number" step="0.1" name="skin_thickness" class="form-input" placeholder="mm">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>DPF (Diabetes Pedigree)</label>
+                        <input type="number" step="0.001" name="dpf" class="form-input" placeholder="0.0 - 2.5">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Pregnancies</label>
-              <input type="number" name="pregnancies" class="form-control" min="0" value="0">
+            
+            <!-- Oxygen & Temperature -->
+            <div class="section-title">Oxygen & Vital Signs</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Oxygen Saturation (SpO2)</label>
+                        <input type="number" step="0.1" name="oxygen_saturation" class="form-input" placeholder="%" value="98">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Skin Thickness</label>
-              <input type="number" step="0.1" name="skin_thickness" class="form-control" placeholder="mm">
+            
+            <!-- Symptoms & Risk Factors -->
+            <div class="section-title">Symptoms & Risk Factors</div>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="chest_pain" name="chest_pain">
+                    <label for="chest_pain">Chest Pain/Discomfort</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="shortness_of_breath" name="shortness_of_breath">
+                    <label for="shortness_of_breath">Shortness of Breath</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="fatigue" name="fatigue">
+                    <label for="fatigue">Unusual Fatigue</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="swelling" name="swelling">
+                    <label for="swelling">Swelling (Legs/Ankles)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="smoking" name="smoking">
+                    <label for="smoking">Smoker</label>
+                </div>
             </div>
-          </div>
-          
-          <!-- Blood Tests Section -->
-          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Blood Tests (if available)</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <label class="form-label">Glucose (Fasting)</label>
-              <input type="number" step="0.1" name="glucose" class="form-control" placeholder="mg/dL">
+            
+            <div class="form-group mt-3">
+                <label>Family History (comma-separated)</label>
+                <input type="text" name="family_history" class="form-input" placeholder="e.g., heart disease, diabetes, hypertension">
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Insulin</label>
-              <input type="number" step="0.1" name="insulin" class="form-control" placeholder="μU/mL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Hemoglobin</label>
-              <input type="number" step="0.1" name="hemoglobin" class="form-control" placeholder="g/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">DPF (Diabetes Pedigree)</label>
-              <input type="number" step="0.001" name="dpf" class="form-control" placeholder="0.0 - 2.5">
-            </div>
-          </div>
-          
-          <!-- Lipid Profile Section -->
-          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Lipid Profile (if available)</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <label class="form-label">Total Cholesterol</label>
-              <input type="number" step="0.1" name="cholesterol" class="form-control" placeholder="mg/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">HDL Cholesterol</label>
-              <input type="number" step="0.1" name="hdl" class="form-control" placeholder="mg/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">LDL Cholesterol</label>
-              <input type="number" step="0.1" name="ldl" class="form-control" placeholder="mg/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Triglycerides</label>
-              <input type="number" step="0.1" name="triglycerides" class="form-control" placeholder="mg/dL">
-            </div>
-          </div>
-          
-          <!-- Kidney & Liver Function Section -->
-          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Kidney & Liver Function (if available)</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <label class="form-label">Creatinine</label>
-              <input type="number" step="0.01" name="creatinine" class="form-control" placeholder="mg/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Urea/BUN</label>
-              <input type="number" step="0.1" name="urea" class="form-control" placeholder="mg/dL">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">ALT (Liver Enzyme)</label>
-              <input type="number" step="0.1" name="alt" class="form-control" placeholder="U/L">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">AST (Liver Enzyme)</label>
-              <input type="number" step="0.1" name="ast" class="form-control" placeholder="U/L">
-            </div>
-          </div>
-          
-          <!-- Symptoms Section -->
-          <h6 class="text-muted text-uppercase mb-3 border-bottom pb-2">Symptoms & Risk Factors</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <div class="form-check">
-                <input type="checkbox" name="chest_pain" class="form-check-input" id="chest_pain">
-                <label class="form-check-label" for="chest_pain">Chest Pain/Discomfort</label>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-check">
-                <input type="checkbox" name="shortness_of_breath" class="form-check-input" id="shortness_of_breath">
-                <label class="form-check-label" for="shortness_of_breath">Shortness of Breath</label>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-check">
-                <input type="checkbox" name="fatigue" class="form-check-input" id="fatigue">
-                <label class="form-check-label" for="fatigue">Unusual Fatigue</label>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-check">
-                <input type="checkbox" name="swelling" class="form-check-input" id="swelling">
-                <label class="form-check-label" for="swelling">Swelling (Legs/Ankles)</label>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-check">
-                <input type="checkbox" name="smoking" class="form-check-input" id="smoking">
-                <label class="form-check-label" for="smoking">Smoker</label>
-              </div>
-            </div>
-            <div class="col-md-9">
-              <label class="form-label">Family History (comma-separated)</label>
-              <input type="text" name="family_history" class="form-control" placeholder="e.g., heart disease, diabetes, hypertension">
-            </div>
-          </div>
-          
-          <div class="col-12">
-            <button type="submit" class="btn btn-primary w-100">Run Comprehensive Health Assessment</button>
-          </div>
+            
+            <button type="submit" class="btn-submit mt-4">Run Comprehensive Health Assessment</button>
         </form>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 

@@ -1,46 +1,211 @@
 {% extends "base.html" %}
-{% block title %}Patient Profile{% endblock %}
+{% block title %}{% if patient %}Update Profile{% else %}Create Profile{% endif %} - SmartHMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .form-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+    }
+    
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #1c7ed6, #1098ad);
+        border: none;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+    
+    .btn-secondary {
+        width: 100%;
+        padding: 0.875rem;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        color: #475569;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+    
+    .gender-options {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .gender-option {
+        flex: 1;
+    }
+    
+    .gender-option input {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .gender-option label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .gender-option input:checked + label {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #1c7ed6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8 col-lg-6">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h1 class="h5 mb-3 text-primary">
-          {% if patient %}Update{% else %}Create{% endif %} Patient Profile
-        </h1>
-        <form method="post" novalidate>
-          <div class="mb-3">
-            <label class="form-label">Full Name</label>
-            <input type="text" name="full_name" value="{{ patient.full_name if patient else '' }}" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Age</label>
-            <input type="number" name="age" value="{{ patient.age if patient else '' }}" class="form-control" min="0" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Gender</label>
-            <select name="gender" class="form-select" required>
-              <option value="" disabled {% if not patient %}selected{% endif %}>Select gender</option>
-              <option value="Male" {% if patient and patient.gender == 'Male' %}selected{% endif %}>Male</option>
-              <option value="Female" {% if patient and patient.gender == 'Female' %}selected{% endif %}>Female</option>
-              <option value="Other" {% if patient and patient.gender == 'Other' %}selected{% endif %}>Other</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Phone</label>
-            <input type="text" name="phone" value="{{ patient.phone if patient else '' }}" class="form-control">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Address</label>
-            <textarea name="address" rows="3" class="form-control">{{ patient.address if patient else '' }}</textarea>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">
-            {% if patient %}Update Profile{% else %}Create Profile{% endif %}
-          </button>
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>{% if patient %}Update Your Profile{% else %}Create Your Profile{% endif %}</h1>
+            <p class="text-muted">Please fill in your personal details</p>
+        </div>
+        
+        <form method="post" action="/profile/create">
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" id="full_name" name="full_name" class="form-input" value="{{ patient.full_name if patient else '' }}" required>
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" name="age" class="form-input" value="{{ patient.age if patient else '' }}" required min="1" max="150">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <div class="gender-options">
+                            <div class="gender-option">
+                                <input type="radio" id="gender_male" name="gender" value="Male" {% if patient and patient.gender == 'Male' %}checked{% endif %} required>
+                                <label for="gender_male">Male</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" id="gender_female" name="gender" value="Female" {% if patient and patient.gender == 'Female' %}checked{% endif %}>
+                                <label for="gender_female">Female</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" id="gender_other" name="gender" value="Other" {% if patient and patient.gender == 'Other' %}checked{% endif %}>
+                                <label for="gender_other">Other</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" class="form-input" value="{{ patient.phone if patient else '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="date_of_birth">Date of Birth</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" class="form-input" value="{{ patient.date_of_birth if patient else '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="blood_type">Blood Type</label>
+                <select id="blood_type" name="blood_type" class="form-select">
+                    <option value="">Select Blood Type</option>
+                    <option value="A+" {% if patient and patient.blood_type == 'A+' %}selected{% endif %}>A+</option>
+                    <option value="A-" {% if patient and patient.blood_type == 'A-' %}selected{% endif %}>A-</option>
+                    <option value="B+" {% if patient and patient.blood_type == 'B+' %}selected{% endif %}>B+</option>
+                    <option value="B-" {% if patient and patient.blood_type == 'B-' %}selected{% endif %}>B-</option>
+                    <option value="O+" {% if patient and patient.blood_type == 'O+' %}selected{% endif %}>O+</option>
+                    <option value="O-" {% if patient and patient.blood_type == 'O-' %}selected{% endif %}>O-</option>
+                    <option value="AB+" {% if patient and patient.blood_type == 'AB+' %}selected{% endif %}>AB+</option>
+                    <option value="AB-" {% if patient and patient.blood_type == 'AB-' %}selected{% endif %}>AB-</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" class="form-input" value="{{ patient.address if patient else '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="emergency_contact">Emergency Contact</label>
+                <input type="text" id="emergency_contact" name="emergency_contact" class="form-input" value="{{ patient.emergency_contact if patient else '' }}" placeholder="Name and phone number">
+            </div>
+            
+            <button type="submit" class="btn-primary">{% if patient %}Update Profile{% else %}Create Profile{% endif %}</button>
         </form>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 
