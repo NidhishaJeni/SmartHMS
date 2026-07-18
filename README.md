@@ -281,20 +281,15 @@ SMARTHMS_ALERTS_LOG_PATH=instance/alerts.log
 **Other:**
 - `GET /` - Home page
 - `POST /automation/alert` - Webhook endpoint
-
 ---
-
 ## 📈 Performance & Scalability
 
 - **Database:** SQLite (dev) → PostgreSQL (production)
 - **ML Model:** Heuristic-based disease detection (no external APIs)
 - **Caching:** Ready for Flask-Caching integration
 - **Deployment:** Docker, Heroku, AWS-ready
-
 ---
-
 ## 📝 Version History
-
 **v2.0.0 (Current - March 3, 2026)**
 - ✨ Multi-disease AI prediction engine (8+ diseases)
 - ✨ Comprehensive health assessment (40+ parameters)
@@ -304,7 +299,6 @@ SMARTHMS_ALERTS_LOG_PATH=instance/alerts.log
 - ✨ Diagnostic test recommendations
 - ✨ Fixed Query object length issue in admin dashboard
 - 📚 Comprehensive documentation
-
 **v1.0.0 (Initial)**
 - Diabetes risk prediction
 - Hospital management
@@ -313,7 +307,6 @@ SMARTHMS_ALERTS_LOG_PATH=instance/alerts.log
 - Alert system
 
 ---
-
 **Last Updated:** March 3, 2026  
 **Status:** Active Development  
 **Maintainer:** SmartHMS Development Team
