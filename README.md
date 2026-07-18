@@ -1,5 +1,4 @@
-# SMART HOSPITAL MANAGEMENT SYSTEM (SmartHMS)
-
+# SMART HOSPITAL MANAGEMENT SYSTEM 
 ## 🏥 Enterprise-Grade AI-Powered Healthcare Platform
 
 SmartHMS is a comprehensive full-stack Flask healthcare management system featuring **multi-disease AI prediction**, **intelligent treatment tracking**, **appointment management**, and **hospital resource optimization**. It's designed for seamless coordination between patients, doctors, and hospital administrators with advanced health risk assessment capabilities.
